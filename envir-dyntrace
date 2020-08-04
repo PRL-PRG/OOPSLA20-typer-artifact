@@ -1,0 +1,8 @@
+# -*- mode: sh; -*-
+. "$(dirname "$(readlink -f "$0")")/envir"
+
+export R_BASE_DIR=$R_PROJECT_BASE_DIR/R-dyntrace
+export R_BIN_DIR=$R_BASE_DIR/bin
+export R_BIN=$R_BIN_DIR/R
+export RUN_DIR="$R_PROJECT_BASE_DIR/run-rdyntrace"
+export PATH="$R_BIN_DIR:$PATH"

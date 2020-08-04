@@ -1,0 +1,125 @@
+---
+title: "OOPSLA20 Artifact - Designing Types for R, Empirically"
+authors: "Alexi Turcotte, Aviral Goel, Filip Krikava and Jan Vitek"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
+```
+
+## Artifact Description
+
+This is the artifact for the OOPSLA 2020 paper *Designing Types for R, Empirically*.
+The aim is to:
+
+1.  show the tools that were developed to infer and assert types for R
+    functions,
+2.  demonstrate the entire pipeline used to infer types for R packages.
+
+The artifact is composed of two parts: 
+
+1. a getting started guide that contains the setup instructions and a small
+   experiment to verify that all works, and
+2. a step-by-step instructions on how the tooling developed for this paper work
+   and a complete pipeline which reproduces the data reported in the paper.
+
+## Requirements 
+
+The pipeline depends on a number of tools and R packages:
+
+- git >= 2
+- bash >= 4
+- GNU parallel >= 20190322
+- GNU bison >= 3.5
+- R == 3.5.0
+- R packages
+  - [rapr](https://github.com/PRL-PRG/rapr)_for running the experiments
+  - [contractr](https://github.com/PRL-PRG/contractr)
+  - ...
+
+
+To make it more convenient we have build a docker image that has all these dependencies installed.
+The image is available on [Docker HUB](https://hub.docker.com/r/prlprg/oopsla20-typer).
+This image can be either pulled directly from the Hub or <a href="#building-image-locally">built locally</a>.
+To run the image, you will need [docker community edition](https://docs.docker.com/install/) version 18+ and bash.
+
+
+This artifact requires about ~13GB of free space.
+
+
+## Getting Started Guide
+
+Open `README.Rmd` by either navigating to `File` -> `Open File...` menu item or by running:
+
+```{r eval=FALSE}
+rstudioapi::navigateToFile("~/README.Rmd")
+```
+
+- Getting the docker image
+- Connecting to R studio
+- Running the pipeline on a few packages
+  - a set of 10 packages that runs quick?
+
+Check that Rstudio can see the installed corpus.
+The number of installed packages should be 603.
+
+```{r}
+length(installed.packages()[,1])
+```
+
+This concludes the getting started guide.
+
+## Step-by-step Instructions
+
+### Quick Tutorial
+
+#### Types for R functions
+
+#### Types for R packages
+
+#### Inferring Types from R Code
+
+### Redoing the Paper Experiment
+
+#### Corpus
+
+```{r}
+rmarkdown::render("~/typeR/analysis/corpus-analysis.Rmd")
+rstudioapi::viewer("~/typeR/analysis/corpus-analysis.html")
+```
+
+```{r eval=FALSE}
+rstudioapi::navigateToFile("~/typeR/analysis/corpus-analysis.Rmd")
+```
+
+## Artifact Structure
+
+TODO
+
+## Building Image Locally
+<a name="#building-image-locally"/>
+
+To build image locally you can either use make by running:
+
+```{sh eval=FALSE}
+make .docker-build
+```
+
+## Toubleshooting
+
+### Docker on OSX
+
+It is better to use homebrew cask to install docker:
+
+```sh
+brew cask install docker
+```
+
+in case you see `docker: Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?.` error message
+cf: https://stackoverflow.com/a/44719239
+
+### Docker on Linux
+
+In some distribution the package does not add the current user to `docker` group.
+In this case, either add yourself to `docker` group or run all docker-related command with `sudo`.
