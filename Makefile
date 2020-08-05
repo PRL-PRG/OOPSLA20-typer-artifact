@@ -16,13 +16,14 @@ run:
     prlprg/oopsla20-typer \
     /init
 
-.docker-build:
+docker-build:
 	docker build \
     --rm \
+    --build-arg RUNR_VER="$$(date +%s)" \
     -t prlprg/oopsla20-typer \
     .
 
-.docker-run-bash:
+docker-run-bash:
 	docker run \
     -ti \
     --rm \
@@ -30,5 +31,5 @@ run:
     prlprg/oopsla20-typer \
     bash
 
-.docker-upload: docker
+docker-upload: docker
 	docker push prlprg/oopsla20-typer

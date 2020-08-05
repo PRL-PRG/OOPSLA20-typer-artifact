@@ -50,7 +50,8 @@ This artifact requires about ~13GB of free space.
 
 ## Getting Started Guide
 
-Open `README.Rmd` by either navigating to `File` -> `Open File...` menu item or by running:
+Open `README.Rmd` by either navigating to `File` -> `Open File...` menu item or
+by running:
 
 ```{r eval=FALSE}
 rstudioapi::navigateToFile("~/README.Rmd")
@@ -82,16 +83,58 @@ This concludes the getting started guide.
 
 ### Redoing the Paper Experiment
 
+#### Structure of the Artifact
+
+#### The Docker Image
+
+```
+/R
+/typeR
+/envir
+/envir-dyntrace
+```
+
 #### Corpus
+
+In this section we show how to generate data presented in __Chapter 5 - Project
+Corpus_. We do this in a separate notebook:
+`~/typeR/analysis/corpus-analysis.Rmd`.
+
+It loads the metadata collected for the whole of CRAN, namely:
+- ``
+- ``
+
+Since generating this file requires to have all the CRAN packages installed, we
+only include the result.
+
+TODO include examples of running all the tasks on a smaller data set. 
+
+To knit the notebook, run:
 
 ```{r}
 rmarkdown::render("~/typeR/analysis/corpus-analysis.Rmd")
+```
+
+This will generate the following files:
+
+- an HTML file rendering the notebook
+
+```{r}
 rstudioapi::viewer("~/typeR/analysis/corpus-analysis.html")
 ```
 
-```{r eval=FALSE}
-rstudioapi::navigateToFile("~/typeR/analysis/corpus-analysis.Rmd")
+- a Latex file with the raw data to be included in the paper
+
+```{r}
+rstudioapi::viewer("~/typeR/paper/corpus.tex")
 ```
+
+- a plot of the corpus
+
+```{r eval=FALSE}
+rstudioapi::navigateToFile("~/typeR/plots/corpus.pdf")
+```
+
 
 ## Artifact Structure
 

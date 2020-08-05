@@ -26,9 +26,14 @@ source("inc/latextags.R")
 create_tags(path(TAGS_DIR, "corpus.tex"), prefix="", default=TRUE)
 ```
 
-## Load data
+## Overview
 
-TODO: add description
+The aim of this notebook is to prepare the corpus of R packages.
+Out of all installed CRAN packages we want to select those that have:
+- at least `r params$min_revdeps` reverse dependencies and
+- at least `r params$min_coverage` code coverage.
+
+## Load data
 
 ```{r}
 pkgs <- read_csv(CRAN_PACKAGES_DETAILS)

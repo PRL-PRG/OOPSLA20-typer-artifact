@@ -2,3 +2,6 @@
 *.pdf
 *.tex
 /typeR/evaluation/corpus*
+/typeR/jobs-file.txt
+/typeR/paper/
+/typeR/run/

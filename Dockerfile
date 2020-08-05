@@ -1,7 +1,5 @@
 FROM rocker/rstudio:3.5
 
-env NO_DISPLAY=1
-
 # common devel dependencies
 RUN DEBIAN_FRONTEND=noninteractive \
     apt-get update -yqq && \
@@ -62,7 +60,7 @@ ADD envir-dyntrace /
 RUN . /envir && ./install-r.sh
 
 # R dyntrace
-RUN . /envir-dyntrace && ./install-r.sh
+RUN . /envir-dyntrace && ./install-r.sh -s https://github.com/PRL-PRG/R-dyntrace/archive/r-3.5.0.tar.gz
 
 # CRAN mirror
 ADD CRAN-packages-urls.txt /tmp
@@ -127,13 +125,16 @@ RUN . /envir && \
 
 RUN . /envir-dyntrace && \
     git clone https://github.com/PRL-PRG/propagatr --branch typer-oopsla20 && \
-    R_HOME="$R_BASE_DIR" R CMD INSTALL propagatr
+    R CMD INSTALL propagatr
 
+ARG RUNR_VER=unknown
 RUN . /envir && \
     git clone https://github.com/PRL-PRG/runr --branch typer-oopsla20 && \
     R CMD INSTALL runr
 
 WORKDIR /
+
+env IN_DOCKER=1
 
 # configure entrypoint
 ADD entrypoint.sh /
