@@ -44,13 +44,33 @@ The image is available on [Docker HUB](https://hub.docker.com/r/prlprg/oopsla20-
 This image can be either pulled directly from the Hub or <a href="#building-image-locally">built locally</a>.
 To run the image, you will need [docker community edition](https://docs.docker.com/install/) version 18+ and bash.
 
-
-This artifact requires about ~13GB of free space.
-
+This artifact requires about ~10GB of free space, depending on the number of packages that should be analyzed..
 
 ## Getting Started Guide
 
-Open `README.Rmd` by either navigating to `File` -> `Open File...` menu item or
+1. Clone the artifact git repository
+
+```{sh eval=FALSE}
+git clone https://github.com/PRL-PRG/OOPSLA20-typer-artifact
+cd OOPSLA20-typer-artifact
+```
+
+The actual content of the artifact will be discussed in later sections.
+
+1. Run RStudio from the artifact docker container
+
+```{sh eval=FALSE}
+./run-rstudio.sh
+```
+
+This shall start an [RStudio](https://rstudio.com/) on [http://localhost:8787](http://localhost:8787).
+If you want to use an alternative port, you can specify it as an argument to the script above.
+
+To terminate it, at any time send a `SIGINT` (`Ctrl-C`) to the process.
+
+1. Open `README.Rmd`
+
+This can be done by either navigating to `File` -> `Open File...` menu item or
 by running:
 
 ```{r eval=FALSE}
@@ -69,11 +89,13 @@ The number of installed packages should be 603.
 length(installed.packages()[,1])
 ```
 
-This concludes the getting started guide.
+This concludes the getting started guide and the kick the tires part.
 
 ## Step-by-step Instructions
 
 ### Quick Tutorial
+
+This should happen in Rstudio
 
 #### Types for R functions
 
@@ -82,6 +104,8 @@ This concludes the getting started guide.
 #### Inferring Types from R Code
 
 ### Redoing the Paper Experiment
+
+This will happen in command line
 
 #### Structure of the Artifact
 
