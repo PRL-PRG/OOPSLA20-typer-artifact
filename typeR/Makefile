@@ -3,8 +3,8 @@ $(error Targets in this makefile are supposed to be run in a docker container. T
 endif
 
 # extra parameters
-JOBS          ?= 90%
-PACKAGES_FILE ?= /R/packages-corpus.txt
+JOBS          ?= 2
+PACKAGES_FILE ?= /typeR/packages-small-corpus.txt
 TIMEOUT       ?= 30m
 
 # environment
@@ -57,10 +57,10 @@ on-each-package:
 	@[ "$(TASK)" ] || ( echo "*** Undefined TASK"; exit 1 )
 	@[ -f "$(TASK_BIN)" ] || ( echo "*** Unknown TASK_BIN ($(TASK_BIN))"; exit 1 )
 	@[ "$(OUTPUT_DIR)" ] || ( echo "*** Undefined OUTPUT_DIR"; exit 1 )
-	@[ -z "$(START_XVFB)" ] || $(RUNR)/inst/start-xvfb.sh
+	@[ -z "$(START_XVFB)" ] || $(RUNR_DIR)/inst/start-xvfb.sh
 	@echo "$(JOBS)" > $(JOBS_FILE)
 	-mkdir -p "$(OUTPUT_DIR)"
-	PATH=$$R_DIR/bin:$$PATH; \
+	-PATH=$$R_DIR/bin:$$PATH; \
   echo $$PATH; \
   parallel \
     -a $(PACKAGES_FILE) \
@@ -71,5 +71,5 @@ on-each-package:
     --tagstring "$(TASK) - {/}" \
     --timeout $(TIMEOUT) \
     --workdir "$(OUTPUT_DIR)/{/}/" \
-    $(TASK_BIN) \
-      "$(PACKAGES_SRC_DIR)/{1/}" $(ARGS)
+    $(RUNR_DIR)/inst/run-task.sh \
+      $(TASK_BIN) "$(PACKAGES_SRC_DIR)/{1/}" $(ARGS)
