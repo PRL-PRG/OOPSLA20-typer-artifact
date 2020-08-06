@@ -50,36 +50,35 @@ WORKDIR /R
 # bootstrap scripts
 RUN wget "https://raw.githubusercontent.com/PRL-PRG/runr/typer-oopsla20/inst/install-r.sh" && \
     wget "https://raw.githubusercontent.com/PRL-PRG/runr/typer-oopsla20/inst/install-cran-packages.sh" && \
-    chmod +x *.sh
+    wget "https://raw.githubusercontent.com/PRL-PRG/runr/typer-oopsla20/inst/create-cran-snapshot.R" && \
+    chmod +x *.sh *.R
 
-# set up environments
-ADD envir /
-ADD envir-dyntrace /
+env R_VERSION=3.5.0 \
+    R_DIR=/R/R-$R_VERSION \
+    RDT_DIR=/R/R-dyntrace \
+    R_LIBS=/R/library/$R_VERSION \
+    PACKAGES_SRC_DIR=/R/CRAN/extracted \
+    PACKAGES_ZIP_DIR=/R/CRAN/src/contrib \
+    CRAN_LOCAL_MIRROR=file:///R/CRAN
 
 # R
-RUN . /envir && ./install-r.sh
+RUN ./install-r.sh -d $R_DIR -v $R_VERSION
 
 # R dyntrace
-RUN . /envir-dyntrace && ./install-r.sh -s https://github.com/PRL-PRG/R-dyntrace/archive/r-3.5.0.tar.gz
+RUN ./install-r.sh -d $RDT_DIR -s https://github.com/PRL-PRG/R-dyntrace/archive/r-$R_VERSION.tar.gz
+
+env PATH=$R_DIR/bin:$PATH
 
 # CRAN mirror
-ADD CRAN-packages-urls.txt /tmp
-RUN . /envir && \
-    mkdir -p "$PACKAGES_ZIP_DIR" && \
-    cd "$PACKAGES_ZIP_DIR" && \
-    cat /tmp/CRAN-packages-urls.txt | xargs -P 4 -L 1 curl -O && \
-    R --slave -e 'tools::write_PACKAGES(".", type="source", verbose=T)'
+ADD CRAN-packages.txt /tmp
+RUN ./create-cran-snapshot.R "$PACKAGES_ZIP_DIR" /tmp/CRAN-packages.txt
 
-RUN . /envir && \
-    mkdir -p $PACKAGES_SRC_DIR && \
-    ls -1 $PACKAGES_ZIP_DIR/*.tar.gz | xargs -L 1 tar -C "$PACKAGES_SRC_DIR" -xzf
+RUN mkdir -p "$PACKAGES_SRC_DIR" && \
+    ls -1 "$PACKAGES_ZIP_DIR"/*.tar.gz | xargs -L 1 tar -C "$PACKAGES_SRC_DIR" -xzf
 
 # R packages
-ADD packages-base.txt .
-ADD packages-corpus.txt .
-RUN . /envir && \
-    cat packages-base.txt packages-corpus.txt > packages.txt && \
-    ./install-cran-packages.sh -m "$CRAN_LOCAL_MIRROR" -f packages.txt
+ADD CRAN-packages.txt .
+RUN ls -1 "$PACKAGES_SRC_DIR" | ./install-cran-packages.sh -l $R_LIBS -m "$CRAN_LOCAL_MIRROR" -f -
 
 ## The following are dependencies that are too outdated in debian
 
@@ -107,34 +106,30 @@ RUN mkdir bison && \
     make install
 
 # cloc
-RUN curl https://github.com/AlDanial/cloc/releases/download/1.86/cloc-1.86.pl -o /usr/bin/cloc && \
+RUN curl -L https://github.com/AlDanial/cloc/releases/download/1.86/cloc-1.86.pl -o /usr/bin/cloc && \
     chmod +x /usr/bin/cloc
 
 # paper tooling
-RUN . /envir && \
-    git clone https://github.com/PRL-PRG/injectr --branch typer-oopsla20 && \
+RUN git clone https://github.com/PRL-PRG/injectr --branch typer-oopsla20 && \
     R CMD INSTALL injectr
 
-RUN . /envir && \
-    git clone https://github.com/PRL-PRG/tastr --branch typer-oopsla20 && \
+RUN git clone https://github.com/PRL-PRG/tastr --branch typer-oopsla20 && \
     make -C tastr CXX=g++
 
-RUN . /envir && \
-    git clone https://github.com/PRL-PRG/contractr --branch typer-oopsla20 && \
+RUN git clone https://github.com/PRL-PRG/contractr --branch typer-oopsla20 && \
     R CMD INSTALL contractr
 
-RUN . /envir-dyntrace && \
-    git clone https://github.com/PRL-PRG/propagatr --branch typer-oopsla20 && \
-    R CMD INSTALL propagatr
+RUN git clone https://github.com/PRL-PRG/propagatr --branch typer-oopsla20 && \
+    $RDT_DIR/bin/R CMD INSTALL propagatr
 
 ARG RUNR_VER=unknown
-RUN . /envir && \
-    git clone https://github.com/PRL-PRG/runr --branch typer-oopsla20 && \
+RUN git clone https://github.com/PRL-PRG/runr --branch typer-oopsla20 && \
     R CMD INSTALL runr
 
 WORKDIR /
 
 env IN_DOCKER=1
+env OMP_NUM_THREADS=1
 
 # configure entrypoint
 ADD entrypoint.sh /
