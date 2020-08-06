@@ -68,7 +68,7 @@ If you want to use an alternative port, you can specify it as an argument to the
 
 To terminate it, at any time send a `SIGINT` (`Ctrl-C`) to the process.
 
-1. Open `README.Rmd`
+1. Open this `README.Rmd`
 
 This can be done by either navigating to `File` -> `Open File...` menu item or
 by running:
@@ -77,10 +77,7 @@ by running:
 rstudioapi::navigateToFile("~/README.Rmd")
 ```
 
-- Getting the docker image
-- Connecting to R studio
-- Running the pipeline on a few packages
-  - a set of 10 packages that runs quick?
+1. Check that RStudio can see all installed packages.
 
 Check that Rstudio can see the installed corpus.
 The number of installed packages should be 603.
@@ -88,6 +85,20 @@ The number of installed packages should be 603.
 ```{r}
 length(installed.packages()[,1])
 ```
+
+1. Knit `corpus-analysis.Rmd`
+
+1. Try to infer types for tiny corpus of just 2 packages
+
+In the checkouted artifact repository, run the following
+
+```{r}
+cd typeR
+./run.sh make tasks/package-runnable-code-propagatr PACKAGES_FILE=/typeR/packages-tiny-corpus.txt JOBS=2
+./run.sh make tasks/run-extracted-code-propagatr PACKAGES_FILE=/typeR/packages-tiny-corpus.txt JOBS=2
+```
+
+The results will be placed in `run/package-runnable-code-propagatr` ...
 
 This concludes the getting started guide and the kick the tires part.
 
