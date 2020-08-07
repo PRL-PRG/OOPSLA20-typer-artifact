@@ -159,25 +159,82 @@ This should happen in Rstudio
 
 #### Types for R functions
 
-#### Types for R packages
+- run a function with no error
+- run a function with error
+- inject type
+- rerun
+- show the error messages from contractr
+- plus a bit how it works - it injects into all loaded packages
+
+like
+
+```{r eval=FALSE}
+> library(contractr)
+Loading required package: roxygen2
+Added contract to 118 roxygen2 function(s)
+No type declarations found for package contractr
+```
+
+now we load a new library and look :-)
+
+```{r eval=FALSE}
+library(stringr)
+Added contract to 63 stringr function(s)
+```
+
+If you are a package author you can do this directly:
+
+```{r eval=FALSE}
+# @type 
+plus <- function(x, y) {
+  x + y
+}
+```
+
+finally, that the assertions could be exported into files:
+- all_assertions.csv
+- failed_assertions.csv
 
 #### Inferring Types from R Code
 
+FILIP
+
+- run one package
+- show the required steps
+- and how to get to merged.csv
+
 ### Redoing the Paper Experiment
 
-This will happen in command line
+ALEXI
 
-#### Artifact Structure
-<a name="#artifact-structure"/>
+- some intro text what is the experiment (perhaps like in the subsection below - Corpus)
 
-Before we ...
+Since the data are too big, please download this ...
+Running large experiments involve failure, some code is not always deterministic, ... 
 
-#### The Docker Image
-
+```{r eval=FALSE}
+download.file("...")
 ```
-/R
-/typeR
+
+```{r eval=FALSE}
+extract
 ```
+
+#### Expressiveness and Robustness
+
+TODO: ALEXI Chapter 6.1 and 6.2
+
+```{r eval=FALSE}
+rmarkdown::render("~/typeR/analysis/evaluation.Rmd")
+```
+
+```{r eval=FALSE}
+viewer("~/typeR/analysis/evaluation.html")
+```
+
+#### Assertions
+
+TODO: FILIP Chapter 6.3
 
 #### Corpus
 
@@ -188,13 +245,11 @@ If you have completed the getting started guide, you have already ran this noteb
 Here we give more details about how it works.
 
 It loads the metadata collected for the whole of CRAN, namely:
-- ``
-- ``
+- TODO ``
+- TODO ``
 
 Since generating this file requires to have all the CRAN packages installed, we
 only include the result.
-
-TODO include examples of running all the tasks on a smaller data set. 
 
 To knit the notebook, run:
 
@@ -221,6 +276,19 @@ viewer("~/typeR/paper/corpus.tex")
 ```{r eval=FALSE}
 viewer("~/typeR/paper/plots/corpus.pdf")
 ```
+
+## Artifact Structure
+<a name="#artifact-structure"/>
+
+Before we ...
+
+### The Docker Image
+
+```
+/R
+/typeR
+```
+
 
 ## Building Image Locally
 <a name="#building-image-locally"/>
