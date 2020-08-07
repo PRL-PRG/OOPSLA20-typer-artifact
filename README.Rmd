@@ -110,13 +110,28 @@ The rest of the command snippets can be run from within R by either clicking the
 
 1. Check that RStudio can see all installed packages.
 
-First, we need to make sure RStudio sees all the installed packages.
+First, we need to make sure RStudio can load the `contractr` package.
 
-```{r}
-length(installed.packages()[,1])
+```{r eval=FALSE}
+library(contractr)
 ```
 
-The number should be over 600.
+You shoud see an output similar to this:
+
+```
+Loading required package: roxygen2
+Added contract to 118 roxygen2 function(s)
+No type declarations found for package stats
+No type declarations found for package graphics
+No type declarations found for package grDevices
+No type declarations found for package utils
+No type declarations found for package datasets
+No type declarations found for package methods
+No type declarations found for package base
+No type declarations found for package contractr
+```
+
+What is means is discussed in a <a href="#types-for-r">later section</a>.
 
 1. Knit `corpus-analysis.Rmd`
 
@@ -135,6 +150,8 @@ viewer("~/typeR/analysis/corpus-analysis.html")
 ```
 
 1. Try to infer types for tiny corpus of just 2 packages
+
+TODO: Filip
 
 For the last test, we will try to run the type infering pipeline for two packages.
 
@@ -158,6 +175,7 @@ This concludes the getting started guide and the kick the tires part.
 This should happen in Rstudio
 
 #### Types for R functions
+<a name="#types-for-r"/>
 
 - run a function with no error
 - run a function with error
@@ -280,26 +298,26 @@ viewer("~/typeR/paper/plots/corpus.pdf")
 ## Artifact Structure
 <a name="#artifact-structure"/>
 
-Before we ...
-
-### The Docker Image
-
-```
-/R
-/typeR
-```
-
+TODO: FILIP
 
 ## Building Image Locally
 <a name="#building-image-locally"/>
 
-To build image locally you can either use make by running:
+To build image locally, run the following in `$REPO`:
 
 ```{sh eval=FALSE}
-make .docker-build
+make -C docker-image
 ```
 
+If you do not have GNU make, you can run:
+
+TODO: FILIP
+
 ## Toubleshooting
+
+### File Permissions
+
+TODO: FILIP
 
 ### Docker on OSX
 
