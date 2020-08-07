@@ -59,8 +59,8 @@ task/run-extracted-code-propagatr: export TARGETS = run.csv
 task/run-extracted-code-propagatr: export TASK = run-extracted-code.R
 task/run-extracted-code-propagatr: export START_XVFB = 1
 
-task/consolidate-types:
-	./script PKG run/run-extracted-code-propagatr	.	types
+#task/consolidate-types:
+#	./script PKG run/run-extracted-code-propagatr	.	types
 
 task/%: export TASK = $(@F).R
 task/%: export OUTPUT_DIR = $(RUN_DIR)/$(@F)

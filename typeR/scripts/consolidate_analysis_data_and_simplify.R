@@ -36,7 +36,8 @@ base_pkgs_funs <- lapply(base_pkgs, function(x) {
 })
 
 base_pkgs_funs_merged <- do.call(bind_rows, base_pkgs_funs)
-package_merge_df <- bind_rows(package_merge_df, base_pkgs_funs_merged)
+#package_merge_df <- bind_rows(package_merge_df, base_pkgs_funs_merged)
+
 
 # get all relevant files
 lof <- list.files(paste(src_dir, pname, sep="/"), recursive=T, full.names=T) 
@@ -63,6 +64,9 @@ big_df <- map(lof, function(f) {
 # By default, X is 20.
 big_df <- big_df %>% quick_trim_df_to_x_args
 
+# filter our long jumps
+# big_df <- filter(big_df, arg_t_r != "jumped")
+
 # Finally, simplify, and write out.
 big_df <- big_df %>% quick_simplify_types %>% 
           group_by_at(vars(-trace_hash, -type_hash, -count)) %>% 
@@ -85,6 +89,6 @@ write_csv(big_df, paste(tgt_path, "/", pname, ".csv", sep=""))
 
 types <- get_fun_types_for_package(big_df, pname, structless=TRUE, tupleless=TRUE, restrict_analysis=TRUE, unify_lists=FALSE, exported_funs = package_merge_df %>% filter(package == pname))
 
-f <- file(paste0(types_path, "/", pname))
-writeLines(format_package_types_for_write(types), f)
-close(f)
+if (!dir.exists(types_path)) dir.create(types_path, recursive=TRUE)
+
+writeLines(format_package_types_for_write(types), paste0(types_path, "/", pname))
