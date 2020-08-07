@@ -19,14 +19,25 @@ RUN_DIR            := /typeR/run
 # variables
 JOBS_FILE := jobs-file.txt
 MERGE_CSV := $(RUNR_DIR)/inst/merge-csv.R
+BASE_PACKAGES_FILE := /typeR/packages-base-r.txt
 
 .PHONY: \
-  on-each-package
+  on-each-package \
+  task/%
 
 clean:
 	-rm -fr $(RUN_DIR)
 
 task/package-metadata: export TARGETS = metadata.csv
+
+task/package-functions-base:
+	$(MAKE) on-each-package	\
+    TASK=package-functions.R \
+    OUTPUT_DIR=$(RUN_DIR)/package-functions \
+    PACKAGES_FILE=$(BASE_PACKAGES_FILE)
+
+task/package-functions: task/package-functions-base
+task/package-functions: export TARGETS = functions.csv
 
 task/package-runnable-code: export TARGETS = runnable-code.csv runnable-code-metadata.csv
 
