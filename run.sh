@@ -44,4 +44,4 @@ docker run \
   -v "$(pwd)/README.Rmd:/home/rstudio/README.Rmd" \
   -v "$(pwd)/.Rprofile:/home/rstudio/.Rprofile" \
   prlprg/oopsla20-typer \
-  "$cmd"
+  $cmd
