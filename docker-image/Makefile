@@ -12,6 +12,6 @@ image:
     -t prlprg/oopsla20-typer \
     .
 
-image-upload: docker
+image-upload: image
 	docker push prlprg/oopsla20-typer
 
