@@ -1,11 +1,17 @@
 .PHONY: image image-upload
 
+RUNR_VER := $(shell 2>/dev/null curl -s https://api.github.com/repos/PRL-PRG/runr/commits | 2>/dev/null jq -r '.[0].sha')
+ifndef RUNR_VER
+RUNR_VER := $(shell date +%s)
+endif
+
 image:
 	docker build \
     --rm \
-    --build-arg RUNR_VER="$$(date +%s)" \
+    --build-arg RUNR_VER=$(RUNR_VER) \
     -t prlprg/oopsla20-typer \
     .
+
 image-upload: docker
 	docker push prlprg/oopsla20-typer
 
