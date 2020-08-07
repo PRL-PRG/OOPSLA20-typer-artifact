@@ -1,11 +1,18 @@
 ---
 title: "OOPSLA20 Artifact - Designing Types for R, Empirically"
 authors: "Alexi Turcotte, Aviral Goel, Filip Krikava and Jan Vitek"
-output: github_document
+output: 
+  html_document: 
+    theme: journal
+    toc: yes
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
+library(viewer)
+
+knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Artifact Description
@@ -28,25 +35,34 @@ The artifact is composed of two parts:
 
 The pipeline depends on a number of tools and R packages:
 
-- git >= 2
-- bash >= 4
+- bash
+- git
 - GNU parallel >= 20190322
 - GNU bison >= 3.5
-- R == 3.5.0
-- R packages
-  - [rapr](https://github.com/PRL-PRG/rapr)_for running the experiments
-  - [contractr](https://github.com/PRL-PRG/contractr)
-  - ...
+- GNU make >= 4.1
+- [R](https://cran.r-project.org) == 3.5.0
+- [R-dyntrace](https://github.com/PRL-PRG/R-dyntrace) 3.5.0
+- a number of our R packages with their dependencies
+  - [contractr](https://github.com/PRL-PRG/contractr) - runtime type assertions
+  - [injectr](https://github.com/PRL-PRG/injectr) - for injecting code into R functions
+  - [propagatr](https://github.com/PRL-PRG/propagatr) - tracing type usage
+  - [runr](https://github.com/PRL-PRG/runr) - running the experiments
+  - [tastr](https://github.com/PRL-PRG/tastr) - grammar and parser for our R types
 
+and of course a corpus of R packages to be run.
 
 To make it more convenient we have build a docker image that has all these dependencies installed.
-The image is available on [Docker HUB](https://hub.docker.com/r/prlprg/oopsla20-typer).
-This image can be either pulled directly from the Hub or <a href="#building-image-locally">built locally</a>.
-To run the image, you will need [docker community edition](https://docs.docker.com/install/) version 18+ and bash.
+The image can be pulled directly from [Docker HUB](https://hub.docker.com/r/prlprg/oopsla20-typer) or <a href="#building-image-locally">built locally</a>.
+To use the image, you will need:
+- [docker community edition](https://docs.docker.com/install/) version 18+, and 
+- bash.
 
-This artifact requires about ~10GB of free space, depending on the number of packages that should be analyzed..
+This artifact requires about ~10GB of free space, depending on the number of packages that should be analyzed.
+It has been tested on Linux (Manjaro 19 and Ubuntu 18.04).
 
 ## Getting Started Guide
+
+For the initial kick-the-tires phase, please go over the following steps to determine if the artifact is usable in your environment.
 
 1. Clone the artifact git repository
 
@@ -55,50 +71,83 @@ git clone https://github.com/PRL-PRG/OOPSLA20-typer-artifact
 cd OOPSLA20-typer-artifact
 ```
 
-The actual content of the artifact will be discussed in later sections.
+We will refer to the directory in where the artifact is cloned as `$REPO`.
+The content of the artifact is discussed in <a href="#artifact-structure">later section</a>.
 
 1. Run RStudio from the artifact docker container
 
+A part of the artifact evaluation can be done from within an interactive session in an [RStudio](https://rstudio.com).
+The following command will pull the docker image and start an instance of RStudio at the port 8787.
+If you need to use an alternative port, you can specify it using `-p PORT` argument.
+
 ```{sh eval=FALSE}
-./run-rstudio.sh
+./run.sh
 ```
 
-This shall start an [RStudio](https://rstudio.com/) on [http://localhost:8787](http://localhost:8787).
-If you want to use an alternative port, you can specify it as an argument to the script above.
+Once you see an output like:
 
-To terminate it, at any time send a `SIGINT` (`Ctrl-C`) to the process.
+```text
+[services.d] starting services
+[services.d] done.
+```
 
-1. Open this `README.Rmd`
+you should be able to access RStudio in your browser at [http://localhost:8787](http://localhost:8787).
 
-This can be done by either navigating to `File` -> `Open File...` menu item or
+To terminate it, simply interrupt the process by pressing `Ctrl-C` / `Command-C`.
+
+1. Open this `README.Rmd` in RStudio
+
+The rest of the steps can be done in the RStudio.
+To do that, open this `README.Rmd` file by either navigating to `File` -> `Open File...` menu item or
 by running:
 
 ```{r eval=FALSE}
-rstudioapi::navigateToFile("~/README.Rmd")
+navigateToFile("~/README.Rmd")
 ```
+
+in the R interpreter.
+The rest of the command snippets can be run from within R by either clicking the play icon next to the snipper or pressing `Ctrl+Enter` / `Command+Enter`.
 
 1. Check that RStudio can see all installed packages.
 
-Check that Rstudio can see the installed corpus.
-The number of installed packages should be 603.
+First, we need to make sure RStudio sees all the installed packages.
 
 ```{r}
 length(installed.packages()[,1])
 ```
 
+The number should be over 600.
+
 1. Knit `corpus-analysis.Rmd`
+
+Next, we try to build the corpus analyzing notebook.
+This can be done with the following command:
+
+```{r eval=FALSE}
+rmarkdown::render("~/typeR/analysis/corpus-analysis.Rmd")
+```
+
+which, if successfull, generates an HTML file in `~/typeR/analysis/corpus-analysis.Rmd`.
+To view it, either open it in the navigator on the right side or run:
+
+```{r eval=FALSE}
+viewer("~/typeR/analysis/corpus-analysis.html")
+```
 
 1. Try to infer types for tiny corpus of just 2 packages
 
-In the checkouted artifact repository, run the following
+For the last test, we will try to run the type infering pipeline for two packages.
 
-```{r}
-cd typeR
-./run.sh make tasks/package-runnable-code-propagatr PACKAGES_FILE=/typeR/packages-tiny-corpus.txt JOBS=2
-./run.sh make tasks/run-extracted-code-propagatr PACKAGES_FILE=/typeR/packages-tiny-corpus.txt JOBS=2
+This has to be done in a terminal. 
+Navigate to the `$REPO/typeR` and run the following:
+
+```{sh eval=FALSE}
+./in-docker.sh make tasks/infer-types PACKAGES_FILE=packages-tiny-corpus.txt JOBS=1
 ```
 
-The results will be placed in `run/package-runnable-code-propagatr` ...
+The `make` command must be prefixed with `in-docker.sh` as we want to run it inside a docker container.
+
+TODO describe the result
 
 This concludes the getting started guide and the kick the tires part.
 
@@ -118,15 +167,16 @@ This should happen in Rstudio
 
 This will happen in command line
 
-#### Structure of the Artifact
+#### Artifact Structure
+<a name="#artifact-structure"/>
+
+Before we ...
 
 #### The Docker Image
 
 ```
 /R
 /typeR
-/envir
-/envir-dyntrace
 ```
 
 #### Corpus
@@ -134,6 +184,8 @@ This will happen in command line
 In this section we show how to generate data presented in __Chapter 5 - Project
 Corpus_. We do this in a separate notebook:
 `~/typeR/analysis/corpus-analysis.Rmd`.
+If you have completed the getting started guide, you have already ran this notebook.
+Here we give more details about how it works.
 
 It loads the metadata collected for the whole of CRAN, namely:
 - ``
@@ -146,34 +198,29 @@ TODO include examples of running all the tasks on a smaller data set.
 
 To knit the notebook, run:
 
-```{r}
+```{r eval=FALSE}
 rmarkdown::render("~/typeR/analysis/corpus-analysis.Rmd")
 ```
 
 This will generate the following files:
 
-- an HTML file rendering the notebook
+- `corpus-analysis.html`: an HTML file rendering the notebook
 
 ```{r}
-rstudioapi::viewer("~/typeR/analysis/corpus-analysis.html")
+viewer("~/typeR/analysis/corpus-analysis.html")
 ```
 
-- a Latex file with the raw data to be included in the paper
+- `corpus.tex`: a Latex file with the raw data to be included in the paper
 
 ```{r}
-rstudioapi::viewer("~/typeR/paper/corpus.tex")
+viewer("~/typeR/paper/corpus.tex")
 ```
 
-- a plot of the corpus
+- `corpus.pdf`: a plot of the corpus 
 
 ```{r eval=FALSE}
-rstudioapi::navigateToFile("~/typeR/plots/corpus.pdf")
+viewer("~/typeR/paper/plots/corpus.pdf")
 ```
-
-
-## Artifact Structure
-
-TODO
 
 ## Building Image Locally
 <a name="#building-image-locally"/>

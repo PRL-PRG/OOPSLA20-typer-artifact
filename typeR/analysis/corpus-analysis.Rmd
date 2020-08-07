@@ -1,6 +1,9 @@
 ---
 title: "Corpus Analysis"
-output: html_document
+output: 
+  html_document: 
+    theme: journal
+    toc: yes
 editor_options: 
   chunk_output_type: console
 params:
@@ -35,7 +38,7 @@ Out of all installed CRAN packages we want to select those that have:
 
 ## Load data
 
-```{r}
+```{r load data, include=FALSE}
 pkgs <- read_csv(CRAN_PACKAGES_DETAILS)
 ```
 
@@ -43,7 +46,7 @@ pkgs <- read_csv(CRAN_PACKAGES_DETAILS)
 
 ### Thresholds
 
-```{r}
+```{r thresholds}
 overview_table(
   r("threshold code coverage", percent(params$min_coverage)),
   r("threshold revdeps", params$min_revdeps),
@@ -185,7 +188,7 @@ write_csv(corpus, CORPUS_DETAILS)
 
 ### Reverse dependencies
 
-```{r}
+```{r revdeps}
 pkgs_revdeps_raw <- read_csv(
   CRAN_REVDEPS, 
   col_types=cols(

@@ -1,28 +1,42 @@
+#!/usr/bin/env Rscript
 
-require(tidyverse)
+library(tidyverse)
+library(runr)
 
-source("~/pldi/scripts/support_scripts/data_analysis_lib.R")
+base_dir <- dirname(dirname(runr::current_script()))
+
+source(file.path(base_dir, "scripts", "data_analysis_lib.R"))
 
 # args
 args <- commandArgs(trailingOnly=T)
+
 pname <- args[1]
 src_dir <- args[2]
 tgt_path <- args[3]
 types_path <- args[4]
 
 # First, get the list of functions that we care about, for the package in question.
-package_funs <- read_csv(paste0("/var/lib/R/project-typeR/run/package-functions/", pname, "/functions.csv"))
-package_merge_df <- tibble(package = rep(pname, nrow(package_funs)), fun_name = package_funs$fun)
+pkgs_functions_dir <- file.path(base_dir, "run", "package-functions")
+package_funs <- read_csv(file.path(pkgs_functions_dir, pname, "functions.csv"))
+package_merge_df <-
+  transmute(package_funs, package=pname, fun_name=fun)
 
 # Also, we do this for stats, graphics, grDevices, utils, datasets, methods, Autoloads, and base.
-base_funs <- read_csv("~/internal-package-exported-funs/base/functions.csv")
-graphics_funs <- read_csv("~/internal-package-exported-funs/graphics/functions.csv")
-grDevices_funs <- read_csv("~/internal-package-exported-funs/grDevices/functions.csv")
-methods_funs <- read_csv("~/internal-package-exported-funs/methods/functions.csv")
-stats_funs <- read_csv("~/internal-package-exported-funs/stats/functions.csv")
-utils_funs <- read_csv("~/internal-package-exported-funs/utils/functions.csv")
+base_pkgs <- file.path(
+  base_dir, "run", "package-functions",
+  readLines(file.path(base_dir, "packages-base-r.txt")),
+  "functions.csv"
+)
 
-package_merge_df <- bind_rows(package_merge_df, base_funs, graphics_funs, grDevices_funs, methods_funs, stats_funs, utils_funs)
+base_pkgs_funs <- lapply(base_pkgs, function(x) {
+  read_csv(x) %>% transmute(
+    package=basename(dirname(x)),
+    fun_name=fun
+  )
+})
+
+base_pkgs_funs_merged <- do.call(bind_rows, base_pkgs_funs)
+package_merge_df <- bind_rows(package_merge_df, base_pkgs_funs_merged)
 
 # get all relevant files
 lof <- list.files(paste(src_dir, pname, sep="/"), recursive=T, full.names=T) 

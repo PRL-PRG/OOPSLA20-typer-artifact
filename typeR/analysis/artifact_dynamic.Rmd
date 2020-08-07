@@ -1,0 +1,183 @@
+---
+title: "Designing Types for R, Empirically -- Dynamic Evaluation"
+output: html_notebook
+---
+
+This file contains the data and code for producing select Figures and Tables from the paper.
+As the data is available, feel free to play with the data frames and explore!
+
+```{r}
+# Load the initial data.
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+
+# Data manipulation functions.
+source("/mnt/home/pldi/scripts/support_scripts/data_analysis_lib.R")
+
+# Data with types of function arguments and returns.
+type_analysis_data <- read_csv("/mnt/home/typeR/evaluation/data/type-analysis/merged/merged.csv")
+
+# All ContractR assertions.
+big_simplified_assertion_df <- read_csv("/mnt/arraySSD/alexi/oopsla_analysis_data/all_assertions.csv")
+
+# The output of running propagatr, reduced the data (processed), and combined it into mega CSV.
+core_corpus_run <- read_csv("/mnt/arraySSD/alexi/oopsla_analysis_data/all.csv", col_types=paste0("cccccl", paste(rep("ccc", 21), collapse=""), "i")) %>% filter(has_dots != "has_dots")
+core_corpus_counts <- quick_get_type_counts(core_corpus_run) %>% ungroup
+
+# For Table 4
+df_failed_assertions <- read_csv("/var/lib/R/analysis_data/failed-assertions.csv")
+df_failed_assertions_no_undef <- df_failed_assertions %>% filter(expected_type != "<undefined>")
+```
+
+## Corpus -- Table 1
+
+```{r}
+
+dyn_occ_by_type <- big_simplified_assertion_df %>% mutate(count = 1) %>% group_by(actual_type) %>% summarize(count = sum(count)) %>% mutate(perc_arg = round(100 * count / sum(count), 2)) %>% arrange(-count) %>% rename("type" = "actual_type")
+
+dyn_occ_by_type_core_corpus <- core_corpus_counts %>% group_by(type) %>% summarize(count = sum(count)) %>%
+  filter(substr(type, 1, 3) %in% c(substr(static_occ_by_type %>% head(10) %>% select(type) %>% unlist %>% unname, 1, 3), "NUL"))
+
+dyn_occ_by_type_core_corpus$type %>% map(function(s) strsplit(s, "@", fixed=T)[[1]][1]) -> type_names
+dyn_occ_by_type_core_corpus$type <- type_names %>% unlist
+
+dyn_occ_for_write <- dyn_occ_by_type_core_corpus %>% group_by(type) %>% summarize(count = sum(count)) %>% ungroup %>% filter(type %in% c(static_occ_by_type %>% head(10) %>% select(type) %>% unlist %>% unname, "NULL"))
+
+dyn_occ_for_write$type[dyn_occ_for_write$type == "NULL"] <- "null"
+
+dyn_occ_for_write <- dyn_occ_for_write %>% mutate(perc_arg = round(100 * count / sum(dyn_occ_by_type_core_corpus$count), 2))
+
+static_occ_by_type <- type_analysis_data %>% group_by(type) %>% 
+  summarize(count = sum(count)) %>% 
+  mutate(perc_arg = round(100 * count / sum(count), 2)) %>%
+  arrange(-count)
+
+corpus_tbl <- inner_join(static_occ_by_type, dyn_occ_for_write, by="type") %>%
+  rename("Type" = "type", "Args with Type" = "count.x", "% of Static Types" = "perc_arg.x", "Dynamic Observations" = "count.y", "% of Dynamic Types" = "perc_arg.y")
+
+kable(corpus_tbl, "latex", booktabs=T)
+```
+
+## 6.2 -- Table 4
+
+```{r}
+df_failed_assertions_no_undef %>% 
+  mutate(count = 1) %>%
+  group_by(actual_type, expected_type) %>%
+  summarize(count=sum(count)) %>%
+  ungroup %>% 
+  arrange(-count) %>%
+  mutate(perc = round(100 * count / sum(count), 10)) %>%
+  mutate(cumperc = round(100 * cumsum(perc) / sum(perc), 2)) %>%
+  mutate(perc = round(perc, 2)) -> failed_assertions_raw_by_type
+
+failed_assertions_raw_by_type
+
+# For the LaTeX:
+# kable(head( failed_assertions_raw_by_type %>%
+#              rename(c("Actual Type" = "actual_type", "Expected Type" = "expected_type", "# Failed Assertions" = "count", "% Total" = "perc", "Cumulative %" = "cumperc")), 10), "latex", booktabs=T)
+```
+
+## 6.2 -- Table 5
+
+```{r}
+df_failed_assertions_no_undef %>% 
+  # First, let's try to get things by argument position.
+  # We don't want to count millions of assertions for a single argument to skew.
+  group_by(package_name, function_name, parameter_position, actual_type, expected_type) %>%
+  summarize() %>%
+  # Now, ungroup, and group by type, with counts.
+  ungroup %>% 
+  mutate(count = 1) %>% 
+  group_by(actual_type, expected_type) %>%
+  summarize(count = sum(count)) %>%
+  # Ungroup for cum
+  ungroup -> assertion_failures_by_position
+
+assertion_failures_by_position <- assertion_failures_by_position %>%
+  arrange(-count) %>%
+  mutate(perc = round(100 * count / sum(assertion_failures_by_position$count), 10)) %>%
+  mutate(cumperc = round(100 * cumsum(perc) / sum(perc), 2)) %>%
+  mutate(perc = round(perc, 2))
+
+assertion_failures_by_position
+```
+
+## 6.2 -- Tables 6 and 7
+
+```{r}
+arg_type_occurrence <- big_simplified_assertion_df %>% group_by(package_name, function_name, parameter_position, expected_type) %>% summarize() %>% ungroup %>% mutate(count = 1) %>% group_by(expected_type) %>% summarize(count = sum(count))
+
+df_failed_assertions_no_undef %>% group_by(package_name, function_name, parameter_position, actual_type, expected_type) %>% summarize %>% ungroup %>% mutate(count = 1) %>% group_by(actual_type, expected_type) %>% summarize(count = sum(count)) %>% ungroup %>% arrange(-count) %>% inner_join(arg_type_occurrence, by="expected_type") %>% rename("sig_failed_count" = "count.x", "tot_sigs" = "count.y") -> arg_sig_viol_breakdown
+
+arg_sig_viol_breakdown %>% filter(tot_sigs >= quantile(arg_sig_viol_breakdown$tot_sigs, .90)) %>%
+  mutate(arg_type_failure_rate = sig_failed_count / tot_sigs) %>% arrange(-arg_type_failure_rate) %>% head(5) -> tbl6
+
+tbl6
+```
+
+```{r}
+arg_sig_viol_breakdown %>% filter(tot_sigs >= quantile(arg_sig_viol_breakdown$tot_sigs, .80)) %>%
+  mutate(arg_type_failure_rate = sig_failed_count / tot_sigs) %>% arrange(-arg_type_failure_rate) %>% head(5) -> tbl7
+
+tbl7
+```
+
+## Numbers
+
+```{r}
+# \NUMASSERTIONS
+total_assertions <- assertions_by_fun %>% select(count) %>% sum
+
+# \PERCFAILEDASSERTIONS
+perc_failed <- 1 - nrow(big_simplified_assertion_df %>% filter(assertion_status)) / nrow(big_simplified_assertion_df)
+
+# \PROPFUNSFAILEDCHECK
+prop_funs_with_a_failed_assertion <- nrow(df_failed_assertions_no_undef %>% group_by(package_name, function_name) %>% summarize() %>% ungroup) / nrow(assertions_by_fun)
+
+# \PERCSUCCFUNS
+prop_funs_succ_check <- 1 - prop_funs_with_a_failed_assertion
+
+# \PROPFUNSFAILEDCHECKNOSTHREE
+prop_funs_with_a_failed_assertion_no_dispatch <- nrow(funs_with_failing_assertions_no_dispatch) / nrow(assertions_by_fun)
+
+# \PERCSUCCFUNNOSTHREE
+prop_funs_succ_check_no_s3 <- 1 - prop_funs_with_a_failed_assertion_no_dispatch
+
+args_with_failed_assertions <- function_arg_counts %>% semi_join(df_failed_assertions_no_undef)
+
+# \PROPARGSFAILINGASSERTS
+prop_args_with_failed_assertions <- nrow(args_with_failed_assertions) / nrow(function_arg_counts)
+
+# \PERCSUCCARG
+prop_args_succ_asserts <- 1 - prop_args_with_failed_assertions
+
+perc_failed_vec_to_sca <- 
+  assertion_failures_by_position %>% filter(actual_type %in% paste0(PRIM_TYPES, "[]") & expected_type %in% PRIM_TYPES & substr(actual_type, 1, 3) == substr(expected_type, 1, 3)) %>% select(perc) %>% sum
+
+# /PERCFAILEDVECTOSCA
+perc_failed_vec_to_sca
+
+# How many times were each function tested?
+tests_per_fun <- core_corpus_run %>% group_by(package, fun_name) %>% summarize(count = sum(count)) %>% ungroup %>% rename("package_name" = "package", "function_name" = "fun_name")
+
+tests_per_fun <- tests_per_fun %>% semi_join(package_exported_funs) %>%
+  filter(!package_name %in% c("base", "graphics", "grDevices", "methods", "stats", "utils"))
+
+# Match with failing ones.
+tests_per_fun_with_failing_assertion <- tests_per_fun %>% semi_join(funs_with_failing_assertions_no_dispatch)
+
+# \PERCCALLSBADFUNSINTESTS
+perc_of_bad_tests <- tests_per_fun %>% semi_join(funs_with_failing_assertions_no_dispatch) %>% select(count) %>% sum / tests_per_fun %>% select(count) %>% sum
+
+# \PERCFAILEDFUNSWITHTHREEORLESSUNIQUEOBSSIGS
+perc_sub_3 <- (core_corpus_run %>% rename(package_name = package, function_name = fun_name) %>% inner_join(funs_with_failing_assertions_no_dispatch) %>% mutate(num_unique_sigs = 1) %>% group_by(package_name, function_name) %>% summarize(num_unique_sigs = sum(num_unique_sigs)) %>% arrange(-num_unique_sigs) %>% ungroup %>% filter(num_unique_sigs < 4) %>% nrow) / (core_corpus_run %>% rename(package_name = package, function_name = fun_name) %>% inner_join(funs_with_failing_assertions_no_dispatch) %>% mutate(num_unique_sigs = 1) %>% group_by(package_name, function_name) %>% summarize(num_unique_sigs = sum(num_unique_sigs)) %>% arrange(-num_unique_sigs) %>% ungroup %>% nrow)
+
+dyn_num_structs <- core_corpus_counts %>% mutate(has_struct = ifelse(substr(type, 1, 3) == "str", TRUE, FALSE)) %>% filter(has_struct) %>% select(count) %>% unlist %>% unname %>% sum
+
+dyn_num_lists <- core_corpus_counts %>% mutate(has_struct = ifelse(substr(type, 1, 3) == "lis", TRUE, FALSE)) %>% filter(has_struct) %>% select(count) %>% unlist %>% unname %>% sum
+
+# \PROPSTRUCTSDYN
+prop_structs <- dyn_num_structs / (dyn_num_structs + dyn_num_lists)
+```

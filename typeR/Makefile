@@ -30,6 +30,8 @@ clean:
 
 task/package-metadata: export TARGETS = metadata.csv
 
+task/package-asserts: export TARGETS = package-asserts.csv
+
 task/package-functions-base:
 	$(MAKE) on-each-package	\
     TASK=package-functions.R \
@@ -56,6 +58,9 @@ task/run-extracted-code-propagatr: export R_DIR = $(RDT_DIR)
 task/run-extracted-code-propagatr: export TARGETS = run.csv
 task/run-extracted-code-propagatr: export TASK = run-extracted-code.R
 task/run-extracted-code-propagatr: export START_XVFB = 1
+
+task/consolidate-types:
+	./script PKG run/run-extracted-code-propagatr	.	types
 
 task/%: export TASK = $(@F).R
 task/%: export OUTPUT_DIR = $(RUN_DIR)/$(@F)

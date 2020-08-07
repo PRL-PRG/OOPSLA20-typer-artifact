@@ -53,8 +53,8 @@ RUN wget "https://raw.githubusercontent.com/PRL-PRG/runr/typer-oopsla20/inst/ins
     wget "https://raw.githubusercontent.com/PRL-PRG/runr/typer-oopsla20/inst/create-cran-snapshot.R" && \
     chmod +x *.sh *.R
 
-env R_VERSION=3.5.0 \
-    R_DIR=/R/R-$R_VERSION \
+env R_VERSION=3.5.0
+env R_DIR=/R/R-$R_VERSION \
     RDT_DIR=/R/R-dyntrace \
     R_LIBS=/R/library/$R_VERSION \
     PACKAGES_SRC_DIR=/R/CRAN/extracted \
