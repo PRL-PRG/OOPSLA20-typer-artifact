@@ -22,7 +22,7 @@ BASE_PACKAGES <- c(
 )
 
 packages_corpus <- readLines("typeR/packages-corpus.txt")
-packages_base <- readLines("scripts/packages-base.txt")
+packages_base <- readLines("scripts/our-packages-dependencies.txt")
 packages <- unique(c(packages_corpus, packages_base))
 
 dependencies <- unlist(tools::package_dependencies(packages, recursive=T))
