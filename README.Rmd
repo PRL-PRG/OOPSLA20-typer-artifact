@@ -180,7 +180,7 @@ This concludes the getting started guide and the kick the tires part.
 
 This should happen in Rstudio
 
-#### Types for R functions
+#### contractr
 <a name="#types-for-r"/>
 
 - run a function with no error
@@ -190,34 +190,221 @@ This should happen in Rstudio
 - show the error messages from contractr
 - plus a bit how it works - it injects into all loaded packages
 
-like
 
-```{r eval=FALSE}
-> library(contractr)
-Loading required package: roxygen2
-Added contract to 118 roxygen2 function(s)
-No type declarations found for package contractr
+The `contractr` library helps generates runtime contracts from function type
+signatures. It modifies the function body to check for function argument and
+return value types. Let us look at how this library works.
+
+First we load `contractr`. It depends on the R package `roxygen2`, which gets
+loaded as well. `contractr` comes equipped with type declarations for 395
+packages, `roxygen2` being one of them. As shown in the console output below,
+when `roxygen2` is loaded, `contractr` automatically inserts contracts to it's
+118 functions. In general, `contractr` sets up package load hooks. So if any of
+the 395 packages are loaded, `contractr` automatically adds contracts to their
+functions. If no type declarations are available for a package, `contractr`
+reports that as well.
+
+```{r eval=TRUE}
+library(contractr)
 ```
 
-now we load a new library and look :-)
+Now, we load the `stringr` library, for which `contractr` has type declarations.
 
-```{r eval=FALSE}
+```{r eval=TRUE}
 library(stringr)
-Added contract to 63 stringr function(s)
 ```
 
-If you are a package author you can do this directly:
+The aim of `contractr` is to insert runtime type checks and provide meaningful
+error messages when the checks are violated. Let us call one of the `stringr`
+functions and observe `contractr` in action. For this, we choose the `str_count`
+function from `stringr`. This function counts the number of matches of a pattern
+in each element of a string vector (character vector in R speak). Here is an
+example of a type-correct interaction withe the `str_count` function.
+
+
+```{r eval=TRUE}
+fruit <- c("apple", "banana", "pear", "pineapple")
+str_count(fruit, "a")
+```
+
+Now, we will pass a pattern value with incorrect type, a double instead of a
+character. Firstly, as expected the function terminates with an error because
+the pattern argument is not supposed to be a numeric value. Secondly, we observe
+two warning messages. These warning messages are provided by `contractr`. The
+first message originates from the type checking of the `pattern` argument of
+`str_count`. The error message contains the following bits of information:
+- Parameter name and position
+- Function name
+- Expected type
+- Actual type
+- Stack trace
+
+Since the `str_count` function is called from the top-level, the
+stack trace only has a single frame, the `str_count(fruit, 1)` call.
+
+The second warning message originates from a call to the `stringr::type`
+function from within the definition of `str_count` function. It turns out that
+passing a numeric argument to `str_count` also violates the type declaration of
+`type` function. As can be seen from the warning message, the `trace` has size 2
+with `type(pattern)` being called from `str_count(fruit, 1)`.
+
+```{r eval=TRUE}
+fruit <- c("apple", "banana", "pear", "pineapple")
+str_count(fruit, 1)
+```
+
+An important point to note here is that `contractr` reports type mismatches as
+warnings. Unfortunately, if there are too many warnings, R collects them together
+and reports them at the end of the program. It may be desirable to report the
+mismatch when it happens and halt the program at that point. `contractr` allows
+this behavior to be configured using the `set_severity` function. The default
+severity is set to `"warning"`. It can be set to `"error"` to report type
+mismatch as an error and stop the program. With this setting, execution halts
+with the type mismatch error, so only the first type mismatch is reported.
+
+```{r eval=TRUE}
+set_severity("error")
+str_count(fruit, 1)
+```
+
+Severity can also be set to `"silence"` to ignore all type mismatches. With this
+setting, the execution halts with the error message from the function execution.
+
+```{r eval=TRUE}
+set_severity("silence")
+str_count(fruit, 1)
+```
+
+We set the severity back to `"warning"` for the rest of the session.
+
+```{r eval=TRUE}
+set_severity("warning")
+```
+
+Let's look at how the function definition is modified by `contractr` to enable
+the type mismatch checks. If we type the function name on the R console, it
+prints out the definition of the function as it parsed from the package code.
+
+```{r eval=TRUE}
+str_count
+```
+
+However, `contractr` modifies this definition internally, without affecting the
+printed representation of the function definition. The modified function body
+can be obtained using the `body` function. As shown below, `contractr` adds two
+code blocks at the top of the body. The `on.exit` block attaches a function exit
+handler to check the type of the return value. The next block checks the type of
+all the arguments. The real heavy-lifting happens inside native code. The blocks
+immediately call C functions (prefixed with `C_`) using the `.Call` function.
+The reason is that `contractr` has to get around R's laziness semantics for
+argument type checking. Due to laziness, the arguments to a function call are
+unevaluated code thunks (promises). To maintain non-strict evaluation semantics,
+`contractr` inserts type-checking and error-reporting logic inside these thunks.
+It would have been easier to evaluate thunks at this point and check the type of
+arguments values but that would modify the semantics and break code by
+prematurely evaluating arguments which may not even be evaluated or perhaps
+evaluated in a specific order.
+
+```{r eval=TRUE}
+body(str_count)
+```
+
+`contractr` comes equipped with type declarations for 395 packages. Furthermore,
+type declarations can be provided during package development as part of function
+documentation as shown below in the definition of `add3` function. All type
+declarations from the `@type` tag are exported to `TYPEDECLARATION` file inside
+the package that during the package's installation. These files are
+automatically read by `contractr` when the package is loaded.
 
 ```{r eval=FALSE}
-# @type 
-plus <- function(x, y) {
-  x + y
+#' NOTE: running this block has no effect, it has be part of package definition
+#' @type <int> => int
+add3 <- function(x) {
+  x + 3
 }
 ```
 
-finally, that the assertions could be exported into files:
-- all_assertions.csv
-- failed_assertions.csv
+`contractr` also provides API to inject type annotations for functions. This is
+useful for adding contracts to functions defined interactively on the console.
+Note how `contractr` provides type errors for return types and all parameter types.
+
+```{r eval=TRUE}
+f <- function(x, y) {
+    x + y - 1L
+}
+insert_contract(f, "<int, int> => int")
+
+f(1L, 2L)
+
+f(1, 2)
+
+f(1L, 2)
+
+f(1, 2L)
+```
+
+A user may wish to get all the contract assertions at the end of the sessions.
+`contractr` provides an API, `get_contracts`, to query all contract assertions.
+The following interaction outputs a large data frame. Each row is a contract
+assertion (failed or succeeded). The columns contain information about the
+assertions.
+
+```{r eval=TRUE}
+get_contracts()
+```
+
+`clear_contracts` API clears the internal record of contract assertions.
+
+```{r eval=TRUE}
+clear_contracts()
+get_contracts()
+```
+
+For large programs, a user might be interested in selectively capturing and
+ignoring contract assertions. For this, `contractr` provides two functions,
+`capture_contracts` and `ignore_contracts` to execute code blocks by enabling
+and disabling contract assertion respectively. The two functions can be
+arbitrarily nested. `capture_contracts` returns an R list with two fields,
+`result` field contains the result of evaluating the code block and `contracts`
+field contains the data frame of all contract assertions from the code block.
+`ignore_contracts` returns just the result of evaluating the code block as it
+does not perform any contract assertions.
+
+In this code block, type checking of argument and return values for `f(1, 2)`
+will not happen. Only `f(1L, 2)` will be type checked.
+
+```{r eval=TRUE}
+result <- ignore_contracts({
+    capture_contracts({
+        f(1L, 2)
+    })
+    f(1, 2)
+})
+result
+```
+
+In this code block, the behavior is reversed.
+
+```{r eval=TRUE}
+result <- capture_contracts({
+    ignore_contracts({
+        f(1L, 2)
+    })
+    f(1, 2)
+})
+result
+```
+
+In summary, this section has described the design and use of `contractr` library
+and discussed the following salient aspects of its design.
+
+- Error messages
+- Contract violation severity (silent, warning and error)
+- Addition of type annotations as `roxygen2` tags
+- Injection of type declarations for custom user-defined functions
+- API to get and clear contract assertions
+- API to enable and disable contract assertions for code blocks
+
 
 #### Inferring Types from R Code
 
