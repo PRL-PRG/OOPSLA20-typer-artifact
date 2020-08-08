@@ -8,7 +8,10 @@ params:
 
 This file contains the data and code for producing select Figures and Tables from the paper.
 As the data is available, feel free to play with the data frames and explore!
-Configure the parameter `paper_eval` at the top of the file to be `FALSE` if you'd like to test the fresh data you ran.
+
+Note: At the top of this file, you'll find the `data_dir` parameter.
+Setting `data_dir` to `~/typeR/type-inference/data-corpus` will yield the results found in the paper.
+Setting `data_dir` to `~/typeR/type-inference/data` will allow you to look at the results of your local run of the analysis.
 
 This first bit of code is to load all the data and dependencies.
 

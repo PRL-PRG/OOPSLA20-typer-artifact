@@ -429,36 +429,10 @@ To that end, we packaged our data and include it with this artifact.
 The data itself is liable to be useful to any future type-based research of R.
 
 Note: as you conduct your evaluation, you will find a number of small discrepancies between the numbers seen here and those in the paper.
-Running large experiments is frustrating, and involves random failures, nondeterministic function behaviour, and weird environment configurations leading to sporadic issues.
+Running large experiments involves random failures, nondeterministic function behaviour, and weird environment configurations leading to sporadic issues.
 These discrepancies are very minor, amounting to differences on the order of fractions of a percent, and we don't believe this issue to be a cause for major concern.
 
-
-ALEXI
-
-- some intro text what is the experiment (perhaps like in the subsection below - Corpus)
-
-Since the data are too big, please download this ...
-Running large experiments involve failure, some code is not always deterministic, ... 
-
-```{r eval=FALSE}
-download.file("...")
-```
-
-```{r eval=FALSE}
-extract
-```
-
-#### Expressiveness and Robustness
-
-TODO: ALEXI Chapter 6.1 and 6.2
-
-```{r eval=FALSE}
-rmarkdown::render("~/typeR/analysis/evaluation.Rmd")
-```
-
-```{r eval=FALSE}
-viewer("~/typeR/analysis/evaluation.html")
-```
+We refer the reader to `~/typeR/type-inference/notebooks/evaluation.Rmd` for the analysis. 
 
 #### Assertions
 
