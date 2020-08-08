@@ -1,42 +1,46 @@
 #!/usr/bin/env Rscript
 
-library(tidyverse)
+suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library(purrr))
+library(readr)
 library(runr)
+library(tidyr)
 
 base_dir <- dirname(dirname(runr::current_script()))
 
-source(file.path(base_dir, "scripts", "data_analysis_lib.R"))
+source(file.path(base_dir, "scripts", "data-analysis-lib.R"))
 
 # args
 args <- commandArgs(trailingOnly=T)
 
-pname <- args[1]
+pname <- basename(args[1])
 src_dir <- args[2]
-tgt_path <- args[3]
-types_path <- args[4]
+package_funs_dir <- args[3]
+tgt_path <- getwd()
+types_path <- getwd()
 
 # First, get the list of functions that we care about, for the package in question.
-pkgs_functions_dir <- file.path(base_dir, "run", "package-functions")
-package_funs <- read_csv(file.path(pkgs_functions_dir, pname, "functions.csv"))
+package_funs_file <- file.path(package_funs_dir, pname, "functions.csv")
+package_funs <- read_csv(package_funs_file)
 package_merge_df <-
   transmute(package_funs, package=pname, fun_name=fun)
 
 # Also, we do this for stats, graphics, grDevices, utils, datasets, methods, Autoloads, and base.
-base_pkgs <- file.path(
-  base_dir, "run", "package-functions",
-  readLines(file.path(base_dir, "packages-base-r.txt")),
-  "functions.csv"
-)
+## base_pkgs <- file.path(
+##   package_funs_dir,
+##   readLines(file.path(base_dir, "packages-base-r.txt")),
+##   "functions.csv"
+## )
 
-base_pkgs_funs <- lapply(base_pkgs, function(x) {
-  read_csv(x) %>% transmute(
-    package=basename(dirname(x)),
-    fun_name=fun
-  )
-})
+## base_pkgs_funs <- lapply(base_pkgs, function(x) {
+##   read_csv(x) %>% transmute(
+##     package=basename(dirname(x)),
+##     fun_name=fun
+##   )
+## })
 
-base_pkgs_funs_merged <- do.call(bind_rows, base_pkgs_funs)
-#package_merge_df <- bind_rows(package_merge_df, base_pkgs_funs_merged)
+## base_pkgs_funs_merged <- do.call(bind_rows, base_pkgs_funs)
+## package_merge_df <- bind_rows(package_merge_df, base_pkgs_funs_merged)
 
 
 # get all relevant files
@@ -74,7 +78,7 @@ big_df <- big_df %>% quick_simplify_types %>%
           ungroup
 
 # Write it.
-write_csv(big_df, paste(tgt_path, "/", pname, ".csv", sep=""))
+write_csv(big_df, file.path(tgt_path, "types.csv"))
 
 # Also, get the types while we're at it.
 # Types for base and other internal packages will be determined later,

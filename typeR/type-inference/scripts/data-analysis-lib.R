@@ -1,6 +1,9 @@
 
-require(tidyverse)  # For all the tibble stuff we do.
+suppressPackageStartupMessages(library(dplyr))
+library(readr)
+suppressPackageStartupMessages(library(purrr))
 require(stringr)    # Need for str_* methods.
+library(tidyr)
  
 #
 # Constants
