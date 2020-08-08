@@ -2,7 +2,8 @@
 title: "Designing Types for R, Empirically -- Paper Reproduction"
 output: html_notebook
 params: 
-  paper_eval: TRUE
+  data_dir: ~/typeR/type-inference/data-corpus
+  script_dir: ~/typeR/type-inference/scripts
 ---
 
 This file contains the data and code for producing select Figures and Tables from the paper.
@@ -13,18 +14,14 @@ This first bit of code is to load all the data and dependencies.
 
 ```{r}
 # Load the initial data.
-library(tidyverse)
-
-# TODO FILIP: set up the paths properly. 
-
-if (paper_eval) {
-  base_path <- "/path/to/paper/data"
-} else {
-  base_path <- "/path/to/local/data"
-}
+suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library(purrr))
+library(readr)
+library(runr)
+library(tidyr)
 
 # Data manipulation functions.
-source("/mnt/home/pldi/scripts/support_scripts/data_analysis_lib.R")
+source(file.path(params$script_dir, "data-analysis-lib.R"))
 
 # Other functions for data processing.
 simplify_types <- function(type) {
@@ -74,9 +71,7 @@ infer_kind <- function(type) {
 }
 
 # Data with types of function arguments and returns.
-type_analysis_data <- read_csv("/mnt/home/typeR/evaluation/data/type-analysis/merged/merged.csv")
-# UNCOMMENT when paths are fixed
-# type_analysis_data <- read_csv(file.path(base_path, "merged.csv"))
+type_analysis_data <- read_csv(file.path(params$data_dir, "type-traces.csv"))
 
 function_arg_counts <- type_analysis_data %>% group_by(package_name, function_name, parameter_position) %>% summarize %>% ungroup
 
@@ -115,11 +110,10 @@ static_occ_by_type <- type_analysis_data %>% group_by(type) %>%
 # All ContractR assertions.
 big_simplified_assertion_df <- read_csv("/mnt/nvme0/R/project-typeR/artifact/typeR/data/assertions-all.csv")
 big_simplified_assertion_df %>% group_by(package_name, function_name, parameter_position, actual_type, expected_type) %>% summarize(count = n(), succ_ass = sum(assertion_status)) -> big_simplified_assertion_df_extra_simpl
-# UNCOMMENT when paths are fixed
-# big_simplified_assertion_df_extra_simpl <- read_csv(file.path(base_path, "assertions-all-counts.csv"))
+big_simplified_assertion_df_extra_simpl <- read_csv(file.path(params$data_dir, "assertions-all-counts.csv"))
 
 # The output of running propagatr, reduced the data (processed), and combined it into mega CSV.
-core_corpus_run <- read_csv("/mnt/arraySSD/alexi/oopsla_analysis_data/all.csv", col_types=paste0("cccccl", paste(rep("ccc", 21), collapse=""), "i")) %>% filter(has_dots != "has_dots")
+core_corpus_run <- read_csv(file.path(params$data_dir, "assertions-all.csv"), col_types=paste0("cccccl", paste(rep("ccc", 21), collapse=""), "i")) %>% filter(has_dots != "has_dots")
 # UNCOMMENT when paths are fixed
 # core_corpus_run <- read_csv(file.path(base_path, "all.csv"), col_types=paste0("cccccl", paste(rep("ccc", 21), collapse=""), "i")) %>% filter(has_dots != "has_dots")
 core_corpus_counts <- quick_gather_types(core_corpus_run)
