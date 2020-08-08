@@ -6,3 +6,5 @@
 /typeR/paper/
 /typeR/run/
 /typeR/type-inference/run/
+typeR/evaluation/inst/type-analyzer
+/typeR/evaluation/data/

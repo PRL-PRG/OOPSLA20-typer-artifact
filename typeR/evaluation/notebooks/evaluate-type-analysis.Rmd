@@ -1,0 +1,685 @@
+---
+title: Evaluation of Types
+output:
+  html_document:
+    theme: cerulean
+    toc: true
+    toc_float: true
+params:
+  type_analysis_datafile: ../data/type-analysis/merged/merged.csv
+  graph_dirpath: ../../paper/plots/
+  table_dirpath: ../../paper/tables/
+  macro_dirpath: ../../paper/macros/
+---
+
+```{r setup, echo=FALSE, eval=TRUE}
+
+suppressPackageStartupMessages(library(stringr))
+suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library(readr))
+suppressPackageStartupMessages(library(purrr))
+suppressPackageStartupMessages(library(tidyr))
+suppressPackageStartupMessages(library(DT))
+suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(tibble))
+suppressPackageStartupMessages(library(knitr))
+suppressPackageStartupMessages(library(kableExtra))
+
+old_theme <- theme_set(theme_bw() + theme(text = element_text(size = 20), panel.border = element_blank()))
+
+macro_filename <- file.path(params$macro_dirpath, "macros.tex")
+
+source("latex-macros.R")
+
+save_graph <- function(plot, filename, device = cairo_pdf, width=12, height=4, ...) {
+    ggsave(filename = file.path(params$graph_dirpath, filename), plot = plot, device = device, width=width, height=height, ...)
+    plot
+}
+
+save_table <- function(content, filename) {
+    write(content, file = file.path(params$table_dirpath, filename))
+}
+
+simplify_types <- function(type) {
+    if(type %in% c("any", "externalptr", "expression", "pairlist")) {
+        "any"
+    }
+    else {
+        type
+    }
+}
+
+is_polymorphic <- function(kind) {
+    kind %in% c("...", "any", "list")
+}
+
+infer_kind <- function(type) {
+    if(type %in% c("integer", "double", "character", "logical", "complex", "raw")) {
+        "scalar"
+    }
+    else if(type %in% c("integer[]", "double[]", "character[]", "logical[]", "complex[]", "raw[]")) {
+        "vector"
+    }
+    else if(type %in% c("^integer[]", "^double[]", "^character[]", "^logical[]", "^complex[]", 
+                        "^integer", "^double", "^character", "^logical", "^complex")) {
+        "^vector"
+    }
+    else if(str_detect(type, "^list")) {
+        "list"
+    }
+    else if(str_detect(type, "^struct")) {
+        "struct"
+    }
+    else if(str_detect(type, "^class")) {
+        "class"
+    }
+    else if(type == "any") {
+        "any"
+    }
+    else if(type == "null") {
+        "null"
+    }
+    else if(type == "...") {
+        "..."
+    }
+    else if(type == "environment") {
+        "environment"
+    }
+    else {
+        "other"
+    }
+}
+
+type_analysis_data <- 
+    read_csv(params$type_analysis_datafile,
+             col_names = TRUE,
+             col_types = cols(col_character(),
+                              col_character(),
+                              col_integer(),
+                              col_integer(),
+                              col_integer(),
+                              col_character(),
+                              col_integer()))
+
+type_analysis_data <-
+    type_analysis_data %>%
+    mutate(type = map_chr(type, simplify_types)) %>%
+    mutate(kind = map_chr(type, infer_kind))
+
+to_percentage <- function(proportions) {
+    str_c(round(100 * proportions, 2), "%")
+}
+```
+
+# Incompatible Functions
+
+```{r incompatible-functions, echo=FALSE, eval=TRUE}
+
+###type_compatibility <-
+###    type_analysis_data %>%
+###    group_by(package_name, function_name, outer_alternative) %>%
+###    summarize(parameter_count = length(unique(parameter_position))) %>%
+###    ungroup() %>%
+###    group_by(package_name, function_name) %>%
+###    mutate(compatible = length(unique(parameter_count)) == 1) %>%
+###    ungroup()
+    
+type_compatibility <-
+    type_analysis_data %>%
+    group_by(package_name, function_name) %>%
+    summarize(compatible = length(unique(outer_alternative)) == 1) %>%
+    ungroup()
+
+incompatible_functions <-
+    type_compatibility %>%
+    filter(!compatible) %>%
+    select(package_name, function_name) %>%
+    distinct()
+
+datatable(incompatible_functions)
+```
+
+There are `r nrow(distinct(incompatible_functions, package_name, function_name))` incompatible functions. 
+We remove them from the rest of the analysis.
+
+```{r remove-incompatible-functions, echo=FALSE, eval=TRUE}
+type_analysis_data <-
+    type_analysis_data %>%
+    dplyr::filter(!(paste0(package_name, c("::"), function_name) %in%
+                    paste0(incompatible_functions$package_name,
+                           "::",
+                           incompatible_functions$function_name)))
+```
+
+Make S3-less data frame, too.
+
+```{r}
+S3_funs <- read_csv("../data/package-functions.csv") %>% select(package, fun, is_s3_dispatch, is_s3_method) %>% filter(is_s3_method | is_s3_method) %>% select(package, fun)
+
+S3_funs <- S3_funs %>% rename("package_name" = "package", "function_name" = "fun")
+
+type_analysis_data_no_S3 <- type_analysis_data %>% anti_join(S3_funs)
+```
+
+```{r high-level, echo=FALSE, eval=TRUE}
+total_package_count <- nrow(distinct(type_analysis_data, package_name))
+total_function_count <- nrow(distinct(type_analysis_data, package_name, function_name))
+
+total_package_count_no_S3 <- nrow(distinct(type_analysis_data_no_S3, package_name))
+total_function_count_no_S3 <- nrow(distinct(type_analysis_data_no_S3, package_name, function_name))
+```
+
+**Packages**: `r total_package_count`
+
+**Functions**: `r total_function_count`
+
+
+# Corpus
+
+## Function Frequency
+
+```{r function-frequency, eval=TRUE, echo=FALSE}
+package_function_count <-
+    type_analysis_data %>%
+    group_by(package_name) %>%
+    summarize(function_count = length(unique(function_name))) %>%
+    ungroup()
+
+datatable(package_function_count)
+
+function_frequency <-
+package_function_count %>%
+mutate(function_count = as.integer(5 * ceiling(function_count / 5))) %>%
+group_by(function_count) %>%
+summarize(package_count = n()) %>%
+ungroup() %>%
+mutate(package_perc = round(100 * package_count / sum(package_count), 2)) %>%
+mutate(package_cumperc = round(100 * cumsum(package_count) / total_package_count, 2))
+
+datatable(function_frequency)
+
+function_frequency %>%
+ggplot(aes(function_count, package_count)) +
+geom_col() +
+scale_y_continuous(
+    "Packages", 
+    sec.axis = sec_axis(~ 100 * . / total_package_count, name = "Packages %")
+  )
+```
+
+## Parameter Frequency
+
+```{r parameter-frequency, eval=TRUE, echo=FALSE}
+function_parameter_count <-
+    type_analysis_data %>%
+    group_by(package_name, function_name) %>%
+    ## subtract one for return position (-1)
+    summarize(parameter_count = length(unique(parameter_position)) - 1) %>%
+    ungroup()
+
+datatable(function_parameter_count)
+
+parameter_frequency <-
+function_parameter_count %>%
+#mutate(parameter_count = as.integer(5 * ceiling(parameter_count / 5))) %>%
+group_by(parameter_count) %>%
+summarize(function_count = n()) %>%
+ungroup() %>%
+mutate(function_perc = round(100 * function_count / total_function_count, 2)) %>%
+mutate(function_cumperc = round(100 * cumsum(function_count) / total_function_count, 2))
+
+datatable(parameter_frequency)
+
+parameter_frequency %>%
+ggplot(aes(parameter_count, function_count)) +
+geom_col() +
+scale_y_continuous(
+    "Function", 
+    sec.axis = sec_axis(~ 100 * . / total_function_count, name = "Function %")
+  )
+```
+
+# Monomorphism
+
+```{r monomorphism, type-data, eval=TRUE,echo=FALSE}
+monomorphic_data <-
+type_analysis_data %>%
+group_by(package_name, function_name, parameter_position) %>%
+summarize(monomorphic = n() == 1) %>%
+ungroup()
+
+monomorphic_function_data <-
+monomorphic_data %>%
+group_by(package_name, function_name) %>%
+summarize(monomorphic = all(monomorphic)) %>%
+ungroup()
+
+datatable(monomorphic_function_data)
+
+
+monomorphic_function_count <- sum(monomorphic_function_data$monomorphic)
+polymorphic_function_count <- sum(!monomorphic_function_data$monomorphic)
+
+monomorphic_package_data <-
+monomorphic_function_data %>%
+group_by(package_name) %>%
+summarize(monomorphism = round(100 * as.double(sum(monomorphic)) / length(monomorphic)),
+          monomorphic = all(monomorphic)) %>%
+ungroup() %>%
+arrange(desc(monomorphism))
+
+
+datatable(monomorphic_package_data)
+
+monomorphic_package_count <- sum(monomorphic_package_data$monomorphic)
+polymorphic_package_count <- sum(!monomorphic_package_data$monomorphic)
+
+monomorphism_package_data <-
+monomorphic_package_data %>%
+group_by(monomorphism) %>%
+summarize(package_count = n()) %>%
+ungroup() %>%
+arrange(desc(monomorphism)) %>%
+mutate(package_cumsum = round(100 * cumsum(package_count) / total_package_count, 2))
+
+datatable(monomorphism_package_data)
+
+monomorphism_package_data %>%
+ggplot(aes(monomorphism, package_count)) +
+geom_col() +
+scale_y_continuous(
+    "Package", 
+    sec.axis = sec_axis(~ 100 * . / total_package_count, name = "Package %")
+  )
+```
+
+There are `r monomorphic_function_count` (`r round(100 * monomorphic_function_count/total_function_count, 2)`%) monomorphic functions.
+There are `r monomorphic_package_count` (`r round(100 * monomorphic_package_count/total_package_count, 2)`%) monomorphic packages.
+
+There are `r polymorphic_function_count` (`r round(100 * polymorphic_function_count/total_function_count, 2)`%) polymorphic functions.
+There are `r polymorphic_package_count` (`r round(100 * polymorphic_package_count/total_package_count, 2)`%) polymorphic packages.
+
+# Type Distribution
+
+```{r type-distribution, type-data, eval=TRUE, echo=FALSE}
+type_data <-
+type_analysis_data %>%
+select(kind, type) %>%
+group_by(kind, type) %>%
+summarize(type_count = n()) %>%
+mutate(kind_count = sum(type_count)) %>%
+ungroup() %>%
+arrange(desc(kind_count, type_count)) %>%
+mutate(kind_perc = round(100 * kind_count / sum(kind_count), 2),
+       type_perc = round(100 * type_count / sum(type_count), 2)) %>%
+mutate(kind_cumperc = round(100 * cumsum(kind_count) / sum(kind_count), 2),
+       type_cumperc = round(100 * cumsum(type_count) / sum(type_count), 2))
+
+
+datatable(type_data)
+
+
+kind_count <-
+type_analysis_data %>%
+select(kind) %>%
+group_by(kind) %>%
+summarize(kind_count = n()) %>%
+ungroup() %>%
+arrange(desc(kind_count)) %>%
+mutate(kind_perc = round(100 * kind_count / sum(kind_count), 2)) %>%
+mutate(kind_cumperc = round(100 * cumsum(kind_count) / sum(kind_count), 2))
+
+
+datatable(kind_count)
+
+
+type_count <-
+type_analysis_data %>%
+select(type) %>%
+group_by(type) %>%
+summarize(type_count = n()) %>%
+ungroup() %>%
+arrange(desc(type_count)) %>%
+mutate(type_perc = round(100 * type_count / sum(type_count), 2)) %>%
+mutate(type_cumperc = round(100 * cumsum(type_count) / sum(type_count), 2))
+
+datatable(type_count)
+```
+
+## Scalar Types
+
+```{r scalar-type, eval=TRUE, echo=FALSE}
+scalar_data <-
+type_analysis_data %>%
+filter(kind == "scalar") %>%
+group_by(type) %>%
+summarize(count = n()) %>%
+ungroup() %>%
+arrange(desc(count)) %>%
+mutate(percentage = round(100 * count / sum(count), 2),
+       cumulative_percentage = round(100 * cumsum(count) / sum(count), 2))
+
+datatable(scalar_data)
+```
+
+
+## Scalar-na Types
+
+```{r scalar-na-type, eval=TRUE, echo=FALSE}
+scalar_na_data <-
+type_analysis_data %>%
+filter(kind == "scalar-na") %>%
+group_by(type) %>%
+summarize(count = n()) %>%
+ungroup() %>%
+arrange(desc(count)) %>%
+mutate(percentage = round(100 * count / sum(count), 2),
+       cumulative_percentage = round(100 * cumsum(count) / sum(count), 2))
+
+datatable(scalar_na_data)
+```
+
+## Vector Types
+
+```{r vector-type, eval=TRUE, echo=FALSE}
+vector_data <-
+type_analysis_data %>%
+filter(kind == "vector") %>%
+group_by(type) %>%
+summarize(count = n()) %>%
+ungroup() %>%
+arrange(desc(count)) %>%
+mutate(percentage = round(100 * count / sum(count), 2),
+       cumulative_percentage = round(100 * cumsum(count) / sum(count), 2))
+
+datatable(vector_data)
+```
+
+## Vector-na Types
+
+```{r vector-na-type, eval=TRUE, echo=FALSE}
+vector_na_data <-
+type_analysis_data %>%
+filter(kind == "^vector") %>%
+group_by(type) %>%
+summarize(count = n()) %>%
+ungroup() %>%
+arrange(desc(count)) %>%
+mutate(percentage = round(100 * count / sum(count), 2),
+       cumulative_percentage = round(100 * cumsum(count) / sum(count), 2))
+
+datatable(vector_na_data)
+```
+
+## Class Types
+
+```{r class-type, eval=TRUE, echo=FALSE}
+class_data <-
+type_analysis_data %>%
+filter(kind == "class") %>%
+group_by(type) %>%
+summarize(count = n()) %>%
+ungroup() %>%
+arrange(desc(count)) %>%
+mutate(percentage = round(100 * count / sum(count), 2),
+       cumulative_percentage = round(100 * cumsum(count) / sum(count), 2))
+
+datatable(class_data)
+```
+
+## List Types
+
+```{r list-type, eval=TRUE, echo=FALSE}
+list_data <-
+type_analysis_data %>%
+filter(kind == "list") %>%
+group_by(type) %>%
+summarize(count = n()) %>%
+ungroup() %>%
+arrange(desc(count)) %>%
+mutate(percentage = round(100 * count / sum(count), 2),
+       cumulative_percentage = round(100 * cumsum(count) / sum(count), 2))
+
+
+datatable(list_data)
+```
+
+## Struct Types
+
+```{r struct-type, eval=TRUE, echo=FALSE}
+struct_data <-
+type_analysis_data %>%
+filter(kind == "struct") %>%
+group_by(type) %>%
+summarize(count = n()) %>%
+ungroup() %>%
+arrange(desc(count)) %>%
+mutate(percentage = round(100 * count / sum(count), 2),
+       cumulative_percentage = round(100 * cumsum(count) / sum(count), 2))
+
+
+datatable(struct_data)
+```
+
+## Other Types
+
+```{r other-type, eval=TRUE, echo=FALSE}
+other_data <-
+type_analysis_data %>%
+filter(kind == "other") %>%
+group_by(type) %>%
+summarize(count = n()) %>%
+ungroup() %>%
+arrange(desc(count)) %>%
+mutate(percentage = round(100 * count / sum(count), 2),
+       cumulative_percentage = round(100 * cumsum(count) / sum(count), 2))
+
+
+datatable(other_data)
+```
+
+## Union Types
+
+```{r union-type, eval=TRUE, echo=FALSE}
+union_data <-
+type_analysis_data %>%
+group_by(package_name, function_name, parameter_position) %>%
+mutate(alternative_count = length(paste0(outer_alternative, "-", inner_alternative))) %>%
+ungroup()
+# %>%
+#filter(alternative_count != 1)
+
+
+union_frequency <-
+union_data %>%
+distinct(package_name, function_name, parameter_position, alternative_count) %>%
+group_by(alternative_count) %>%
+summarize(parameter_count = n()) %>%
+ungroup() %>%
+arrange(desc(parameter_count)) %>%
+mutate(percentage = round(parameter_count / sum(parameter_count), 4),
+       cumulative_percentage = round(cumsum(parameter_count) / sum(parameter_count), 4))
+
+datatable(union_frequency)
+
+total_parameter_count <- sum(union_frequency$parameter_count)
+
+print(total_parameter_count)
+
+union_frequency_folded <-
+    union_frequency %>%
+    select(alternative_count, parameter_count, percentage) %>%
+    filter(alternative_count > 3) %>%
+    summarize(alternative_count = "> 3", parameter_count = sum(parameter_count)) %>%
+    mutate(percentage = round(as.double(parameter_count) / total_parameter_count, 3)) %>%
+    print()
+    
+union_frequency_folded <-
+    union_frequency %>%
+    select(alternative_count, parameter_count, percentage) %>%
+    filter(alternative_count <= 3) %>%
+    mutate(alternative_count = as.character(alternative_count)) %>%
+    rbind(union_frequency_folded)
+    
+datatable(union_frequency_folded)
+    
+(union_frequency_folded %>%
+ggplot(aes(alternative_count, percentage)) +
+geom_col() +
+scale_y_continuous(sec.axis = sec_axis(~ . * total_parameter_count, labels = count_labels), labels = relative_labels) +
+labs(x="Types", y="Positions") +
+scale_x_discrete(limits=c("> 3", 3, 2, 1)) +
+coord_flip() +
+theme(legend.title = element_blank(), legend.position = "top")) %>%
+save_graph("union_frequency.pdf")
+
+
+generate_macro("PercUnitypedPositions", 
+               union_frequency_folded %>% filter(alternative_count == "1") %>% pull(percentage),
+               macro_filename)
+
+generate_macro("PercManytypedPositions", 
+               union_frequency_folded %>% filter(alternative_count == "> 3") %>% pull(percentage),
+               macro_filename)
+
+
+union_types <-
+union_data %>%
+group_by(package_name, function_name, parameter_position, alternative_count) %>%
+summarize(kind = paste0(sort(kind), collapse=" | ")) %>%
+ungroup() %>%
+group_by(alternative_count, kind) %>%
+summarize(count = n()) %>%
+ungroup() %>%
+group_by(alternative_count) %>%
+arrange(desc(count)) %>%
+ungroup() %>%
+group_by(alternative_count) %>%
+mutate(percentage = round(100 * count / sum(count), 1),
+       cumsum_percentage = round(100 * cumsum(count) / sum(count), 1)) %>%
+ungroup() %>%
+group_by(alternative_count) %>%
+slice(1:20) %>%
+ungroup()
+
+datatable(union_types)
+
+unityped_positions <-
+union_types %>% 
+filter(alternative_count == 1) 
+
+
+polymorphic_unityped_rows <-
+unityped_positions %>%
+pull(kind) %>% 
+map_lgl(is_polymorphic)
+
+polymorphic_unityped_rows <- (1:nrow(unityped_positions))[polymorphic_unityped_rows]
+
+print(polymorphic_unityped_rows)
+
+unityped_positions %>%
+select("Types" = kind, "Parameter #" = count, "%" = percentage, "Cumulative %" = cumsum_percentage) %>%
+kable("latex", booktabs = T) %>%
+kable_styling(full_width = F, latex_options = c("scale_down")) %>%
+row_spec(polymorphic_unityped_rows, color = "black", background = "lightgray") %>%
+save_table("uni-typed-breakdown.tex")
+
+
+monomorphic_parameter_count <-
+unityped_positions %>%
+mutate(polymorphic = map_lgl(kind, is_polymorphic)) %>%
+filter(!polymorphic) %>%
+pull(count) %>%
+sum()
+
+
+generate_macro("CountMonomorphicPositions", monomorphic_parameter_count, macro_filename)
+
+generate_macro("PercMonomorphicPositions", monomorphic_parameter_count / total_parameter_count, macro_filename)
+
+generate_macro("CountPositions", total_parameter_count, macro_filename)
+
+single_union_types <-
+union_data %>%
+filter(alternative_count == 1) %>%
+group_by(kind) %>%
+summarize(count = n())%>%
+ungroup() %>%
+arrange(desc(count)) %>%
+mutate(percentage = round(100 * count / sum(count), 1),
+       cumsum_percentage = round(100 * cumsum(count) / sum(count), 1))
+
+
+datatable(single_union_types)
+```
+
+
+```{r, eval = TRUE, verbose = FALSE}
+function_polymorphism <-
+union_data %>%
+distinct(package_name, function_name, parameter_position, alternative_count) %>%
+mutate(polymorphic = ifelse(alternative_count > 1, TRUE, is_polymorphic(alternative_count))) %>%
+group_by(package_name, function_name) %>%
+summarize(polymorphic_position_count = as.integer(sum(polymorphic))) %>%
+ungroup()
+
+package_polymorphism <-
+function_polymorphism %>%
+group_by(package_name) %>%
+summarize(monomorphic = all(polymorphic_position_count == 0)) %>%
+ungroup()
+
+function_polymorphic_freq <-
+function_polymorphism %>%
+group_by(polymorphic_position_count) %>%
+summarize(function_count = n()) %>%
+ungroup() %>%
+arrange(polymorphic_position_count)
+
+
+function_polymorphic_freq_more_than_three <-
+function_polymorphic_freq %>%
+filter(polymorphic_position_count > 3) %>%
+summarize(polymorphic_position_count = "> 3", function_count = sum(function_count))
+
+function_polymorphic_freq <-
+function_polymorphic_freq %>%
+filter(polymorphic_position_count <= 3) %>%
+rbind(function_polymorphic_freq_more_than_three) %>%
+mutate(function_percentage = function_count / total_function_count)
+
+
+(function_polymorphic_freq %>%
+ggplot(aes(polymorphic_position_count, function_percentage)) +
+geom_col() +
+scale_y_continuous(sec.axis = sec_axis(~ . * total_function_count, labels = count_labels), labels = relative_labels) +
+scale_x_discrete(limits=c("> 3", 3, 2, 1, 0)) +
+labs(x="Polymorphic Positions", y="Functions") +
+coord_flip() +
+theme(legend.title = element_blank(), legend.position = "top")) %>%
+save_graph("function_polymorphism.pdf")
+
+
+generate_macro("CountMonomorphicFunctions", 
+               function_polymorphic_freq %>% filter(polymorphic_position_count == "0") %>% pull(function_count),
+               macro_filename)
+
+generate_macro("PercMonomorphicFunctions", 
+               function_polymorphic_freq %>% filter(polymorphic_position_count == "0") %>% pull(function_percentage),
+               macro_filename)
+
+generate_macro("CountPolymorphicFunctions", 
+               total_function_count - function_polymorphic_freq %>% filter(polymorphic_position_count == "0") %>% pull(function_count),
+               macro_filename)
+
+generate_macro("PercPolymorphicFunctions", 
+               1.0 - function_polymorphic_freq %>% filter(polymorphic_position_count == "0") %>% pull(function_percentage),
+               macro_filename)
+               
+generate_macro("CountMonomorphicPackages", 
+               package_polymorphism %>% pull(monomorphic) %>% sum(),
+               macro_filename)
+```
+
+
