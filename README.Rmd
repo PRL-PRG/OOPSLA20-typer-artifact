@@ -152,12 +152,18 @@ For the initial kick-the-tires phase, please go over the following steps to dete
   
    The result should be `$REPO/typeR/data` with the following files:
    
-   TODO
    ```
-      
+   data
+   ├── assertions-all.csv
+   ├── assertions-failed.csv
+   ├── type-analysis
+   │   ├── merged.csv
+   │   └── packages
+   │       └── stringr.csv
+   ├── TYPEDECLARATION
+   │   └── stringr           -- the actual inferred types
+   └── type-traces.csv
    ```
-   
-   
 
 This concludes the getting started guide and the kick the tires part.
 
