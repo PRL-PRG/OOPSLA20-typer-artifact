@@ -71,7 +71,7 @@ NOTEBOOKS := $(EVALUATION_HTML) $(PACKAGE_ASSERTS_HTML) $(CORPUS_ANALYSIS_HTML)
   type-analyzer \
   .compress-data-corpus
 
-all: $(DATA_DIR) $(EVALUATION_HTML)
+all: data
 
 clean:
 	-rm -fr $(DATA_DIR)

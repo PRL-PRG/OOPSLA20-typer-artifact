@@ -137,40 +137,27 @@ For the initial kick-the-tires phase, please go over the following steps to dete
     
    What is means is discussed in a <a href="#types-for-r">later section</a>.
 
-1. Knit `corpus-analysis.Rmd`
-
-   Next, we try to build the corpus analyzing notebook which provides data for the Chapter 5 of the paper.
-   This can be done with the following command:
-  
-   ```{r eval=FALSE}
-   rmarkdown::render("~/typeR/analysis/corpus-analysis.Rmd")
-   ```
-  
-   which, if successfull, generates an HTML file in `~/typeR/analysis/corpus-analysis.Rmd`.
-   To view it, either open it in the navigator on the right side or run:
-
-   ```{r eval=FALSE}
-   viewer("~/typeR/analysis/corpus-analysis.html")
-   ```
-    
-   We will go over more details in a <a href="#corpus-analysis">later section</a>.
-
 1. Try to infer types for tiny corpus of just 2 packages
 
-   TODO: Filip
-  
-   For the last test, we will try to run the type infering pipeline for two packages.
+   For the last test, we will try to run the type infering pipeline for a single package: stringr.
   
    This has to be done in a terminal. 
    Navigate to the `$REPO/typeR` and run the following:
   
    ```{sh eval=FALSE}
-   ./in-docker.sh make tasks/infer-types PACKAGES_FILE=packages-tiny-corpus.txt JOBS=1
+   ./in-docker.sh make clean all PACKAGES_FILE=packages-tiny-corpus.txt 
    ```
   
    The `make` command must be prefixed with `in-docker.sh` as we want to run it inside a docker container.
   
-   TODO describe the result
+   The result should be `$REPO/typeR/data` with the following files:
+   
+   TODO
+   ```
+      
+   ```
+   
+   
 
 This concludes the getting started guide and the kick the tires part.
 
@@ -426,12 +413,29 @@ These discrepancies are very minor, amounting to differences on the order of fra
 
 We refer the reader to `~/typeR/notebooks/evaluation.Rmd` for the analysis. 
 
+
+To rerun the analysis, first we have to extract the data for the entire corpus:
+
+```sh
+./in-docker.sh make data-corpus-dir
+```
+
+These should gives us similar files as in the previous section where we only analyzed a few packages.
+
+Next step is to render the `evaluation.Rmd` using:
+
+```sh
+./in-docker.sh make evaluation
+```
+
 #### Assertions
 
 TODO: FILIP Chapter 6.3
 
 #### Corpus
 <a name="#corpus-analysis"/>
+
+TODO: FILIP
 
 In this section we show how to generate data presented in __Chapter 5 - Project
 Corpus_. We do this in a separate notebook:
