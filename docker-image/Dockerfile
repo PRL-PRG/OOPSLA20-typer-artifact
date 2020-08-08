@@ -53,13 +53,15 @@ RUN wget "https://raw.githubusercontent.com/PRL-PRG/runr/typer-oopsla20/inst/ins
     wget "https://raw.githubusercontent.com/PRL-PRG/runr/typer-oopsla20/inst/create-cran-snapshot.R" && \
     chmod +x *.sh *.R
 
-env R_VERSION=3.5.0
-env R_DIR=/R/R-$R_VERSION \
-    RDT_DIR=/R/R-dyntrace \
-    R_LIBS=/R/library/$R_VERSION \
-    PACKAGES_SRC_DIR=/R/CRAN/extracted \
-    PACKAGES_ZIP_DIR=/R/CRAN/src/contrib \
-    CRAN_LOCAL_MIRROR=file:///R/CRAN
+env R_VERSION=3.5.0 \
+    R_PROJECT_BASE_DIR=/R
+
+env R_DIR=/$R_PROJECT_BASE_DIR/R-$R_VERSION \
+    RDT_DIR=/$R_PROJECT_BASE_DIR/R-dyntrace \
+    R_LIBS=/$R_PROJECT_BASE_DIR/library/$R_VERSION \
+    PACKAGES_SRC_DIR=/$R_PROJECT_BASE_DIR/CRAN/extracted \
+    PACKAGES_ZIP_DIR=/$R_PROJECT_BASE_DIR/CRAN/src/contrib \
+    CRAN_LOCAL_MIRROR=file:///$R_PROJECT_BASE_DIR/CRAN
 
 # R
 RUN ./install-r.sh -d $R_DIR -v $R_VERSION
