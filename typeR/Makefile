@@ -213,8 +213,8 @@ on-each-package:
     $(RUNR_DIR)/inst/run-task.sh \
       $(TASK) "$(PACKAGES_SRC_DIR)/{1/}" $(ARGS)
 
-$(DATA_CORPUS_DIR): $(DATA_CORPUS_FILE)
+data-corpus:
 	tar xfvJ $(DATA_CORPUS_FILE)
 
 .compress-data-corpus:
-	tar cfvJ $(DATA_CORPUS_FILE) $(DATA_CORPUS_DIR)
+	tar cfvJ $(DATA_CORPUS_FILE) $(notdir $(DATA_CORPUS_DIR))
