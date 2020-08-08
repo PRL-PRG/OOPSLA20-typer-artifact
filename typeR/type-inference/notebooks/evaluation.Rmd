@@ -108,23 +108,24 @@ static_occ_by_type <- type_analysis_data %>% group_by(type) %>%
   arrange(-count)
 
 # All ContractR assertions.
-big_simplified_assertion_df <- read_csv("/mnt/nvme0/R/project-typeR/artifact/typeR/data/assertions-all.csv")
-big_simplified_assertion_df %>% group_by(package_name, function_name, parameter_position, actual_type, expected_type) %>% summarize(count = n(), succ_ass = sum(assertion_status)) -> big_simplified_assertion_df_extra_simpl
-big_simplified_assertion_df_extra_simpl <- read_csv(file.path(params$data_dir, "assertions-all-counts.csv"))
+# big_simplified_assertion_df <- read_csv("/mnt/nvme0/R/project-typeR/artifact/typeR/data/assertions-all.csv")
+# big_simplified_assertion_df %>% group_by(package_name, function_name, parameter_position, actual_type, expected_type) %>% summarize(count = n(), succ_ass = sum(assertion_status)) -> big_simplified_assertion_df_extra_simpl
+big_simplified_assertion_df_extra_simpl <- read_csv(file.path(params$data_dir, "assertions-all.csv"))
 
 # The output of running propagatr, reduced the data (processed), and combined it into mega CSV.
-core_corpus_run <- read_csv(file.path(params$data_dir, "assertions-all.csv"), col_types=paste0("cccccl", paste(rep("ccc", 21), collapse=""), "i")) %>% filter(has_dots != "has_dots")
+core_corpus_run <- read_csv(file.path(params$data_dir, "type-traces.csv"), col_types=paste0("cccccl", paste(rep("ccc", 21), collapse=""), "i")) %>% filter(has_dots != "has_dots")
 # UNCOMMENT when paths are fixed
 # core_corpus_run <- read_csv(file.path(base_path, "all.csv"), col_types=paste0("cccccl", paste(rep("ccc", 21), collapse=""), "i")) %>% filter(has_dots != "has_dots")
 core_corpus_counts <- quick_gather_types(core_corpus_run)
 
 # For generating some numbers.
-assertions_by_fun <- read_csv("/mnt/arraySSD/alexi/oopsla_analysis_data/total_assertions_by_pkg_and_fun.csv")
+# assertions_by_fun <- read_csv("/mnt/arraySSD/alexi/oopsla_analysis_data/total_assertions_by_pkg_and_fun.csv")
+# big_simplified_assertion_df_extra_simpl %>% ungroup %>% group_by(package_name, function_name) %>% summarize(count = sum(count))
 # UNCOMMENT when paths fixed
-assertions_by_fun <- read_csv(file.path(base_path, "total_assertions_by_pkg_and_fun.csv"))
+assertions_by_fun <- big_simplified_assertion_df_extra_simpl %>% ungroup %>% group_by(package_name, function_name) %>% summarize(count = sum(count))
 
 # For Table 4
-df_failed_assertions <- read_csv("/mnt/arraySSD/alexi/oopsla_analysis_data/failed-assertions.csv")
+df_failed_assertions <- read_csv(file.path(params$data_dir, "assertions-failed.csv"))
 # UNCOMMENT when paths are fixed
 # df_failed_assertions <- read_csv(file.path(base_path, "failed-assertions.csv"))
 df_failed_assertions_no_undef <- df_failed_assertions %>% filter(expected_type != "<undefined>")
