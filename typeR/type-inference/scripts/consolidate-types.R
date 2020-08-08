@@ -69,7 +69,7 @@ big_df <- map(lof, function(f) {
 big_df <- big_df %>% quick_trim_df_to_x_args
 
 # filter our long jumps
-# big_df <- filter(big_df, arg_t_r != "jumped")
+big_df <- filter(big_df, arg_t_r != "jumped")
 
 # Finally, simplify, and write out.
 big_df <- big_df %>% quick_simplify_types %>% 
