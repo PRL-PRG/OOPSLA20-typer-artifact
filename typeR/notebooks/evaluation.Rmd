@@ -75,7 +75,7 @@ infer_kind <- function(type) {
 }
 
 # Data with types of function arguments and returns.
-type_analysis_data <- read_csv(file.path(params$data_dir, "type-traces.csv"))
+type_analysis_data <- read_csv(file.path(params$data_dir, "type-analysis", "merged.csv"))
 
 function_arg_counts <- type_analysis_data %>% group_by(package_name, function_name, parameter_position) %>% summarize %>% ungroup
 
