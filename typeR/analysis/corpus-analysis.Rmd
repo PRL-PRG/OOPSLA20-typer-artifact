@@ -1,9 +1,12 @@
 ---
 title: "Corpus Analysis"
+authors: "Alexi Turcotte, Aviral Goel, Filip Krikava and Jan Vitek"
 output: 
   html_document: 
-    theme: journal
+    keep_md: yes
+    theme: united
     toc: yes
+    toc_float: yes
 editor_options: 
   chunk_output_type: console
 params:
@@ -29,22 +32,32 @@ source("inc/latextags.R")
 create_tags(path(TAGS_DIR, "corpus.tex"), prefix="", default=TRUE)
 ```
 
-## Overview
+## Description
 
-The aim of this notebook is to prepare the corpus of R packages.
-Out of all installed CRAN packages we want to select those that have:
-- at least `r params$min_revdeps` reverse dependencies and
-- at least `r params$min_coverage` code coverage.
+The aim of this notebook is to prepare the corpus of R packages to be included in the paper.
 
-## Load data
+## Loading data
 
-```{r load data, include=FALSE}
+This notebook requires two data files:
+
+- `r CRAN_PACKAGES_DETAILS` - CRAN metadata packages
+- `r CRAN_REVDEPS` - CRAN packages reverse dependencies
+
+```{r load data - packages, include=FALSE}
 pkgs <- read_csv(CRAN_PACKAGES_DETAILS)
 ```
 
-## Overview
+```{r load data - revdep, include=FALSE}
+pkgs_revdeps_raw <- read_csv(
+  CRAN_REVDEPS, 
+  col_types=cols(
+    package = col_character(),
+    revdep = col_character()
+  )
+)
+```
 
-### Thresholds
+## Thresholds
 
 ```{r thresholds}
 overview_table(
@@ -53,6 +66,8 @@ overview_table(
   r("package size outier", params$package_size_outlier)
 )
 ```
+
+## CRAN Overview
 
 ### Table
 
@@ -167,7 +182,7 @@ plot_all <- function(df) {
 plot_all(pkgs_considered)
 ```
 
-## Project corpus
+## Corpus overview
 
 We only consider packages that have at least `r params$min_revdeps` reverse dependencies and `r params$min_coverage*100`% expression coverage.
 
@@ -189,21 +204,12 @@ write_csv(corpus, CORPUS_DETAILS)
 ### Reverse dependencies
 
 ```{r revdeps}
-pkgs_revdeps_raw <- read_csv(
-  CRAN_REVDEPS, 
-  col_types=cols(
-    package = col_character(),
-    revdep = col_character()
-  )
-)
 corpus_revdeps <- pkgs_revdeps_raw %>% semi_join(corpus, by="package")
 write_csv(pkgs_revdeps_raw, CORPUS_REVDEPS)
 write_lines(unique(corpus_revdeps$revdep), CORPUS_REVDEPS_UNIQUE)
 ```
 
-### Overview
-
-#### Table
+### Table
 
 ```{r corpus summary}
 summary_corpus(corpus, "corpus")
@@ -212,7 +218,7 @@ write_csv(corpus, CORPUS_DETAILS)
 write_lines(corpus$package, CORPUS_FILE)
 ```
 
-#### Plot
+### Plot
 
 ```{r plot corpus}
 plot_corpus <- function(df, code_outlier) {
@@ -266,6 +272,8 @@ ggsave(CORPUS_PLOT)
 ```
 
 ### List of corpus packages
+
+The following table is a detailed view of all the packages included in the corpus.
 
 ```{r list of packages}
 datatable(
