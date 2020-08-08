@@ -8,3 +8,5 @@
 /typeR/type-inference/run/
 typeR/evaluation/inst/type-analyzer
 /typeR/evaluation/data/
+/typeR/type-inference/data/
+/typeR/type-inference/data-corpus/

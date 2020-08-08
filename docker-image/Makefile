@@ -1,9 +1,9 @@
 .PHONY: image image-upload
 
-# TODO just use one hash for all packages as all need to be rebuilt anyway
-RUNR_VER := $(shell 2>/dev/null curl -s https://api.github.com/repos/PRL-PRG/runr/commits?sha=typer-oopsla20 | 2>/dev/null jq -r '.[0].sha')
-ifndef RUNR_VER
-RUNR_VER := $(shell date +%s)
+# TODO make a macro
+RUNR_VERSION := $(shell 2>/dev/null curl -s https://api.github.com/repos/PRL-PRG/runr/commits?sha=typer-oopsla20 | 2>/dev/null jq -r '.[0].sha')
+ifndef RUNR_VERSION
+RUNR_VERSION := $(shell date +%s)
 endif
 
 CONTRACTR_VERSION := $(shell 2>/dev/null curl -s https://api.github.com/repos/PRL-PRG/contractr/commits?sha=typer-oopsla20 | 2>/dev/null jq -r '.[0].sha')
