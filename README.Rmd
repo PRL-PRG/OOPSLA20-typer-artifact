@@ -183,14 +183,6 @@ This should happen in Rstudio
 #### contractr
 <a name="#types-for-r"/>
 
-- run a function with no error
-- run a function with error
-- inject type
-- rerun
-- show the error messages from contractr
-- plus a bit how it works - it injects into all loaded packages
-
-
 The `contractr` library helps generates runtime contracts from function type
 signatures. It modifies the function body to check for function argument and
 return value types. Let us look at how this library works.
