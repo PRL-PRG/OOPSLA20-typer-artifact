@@ -19,6 +19,8 @@ PACKAGES_ZIP_DIR   := $(R_PROJECT_BASE_DIR)/CRAN/src/contrib
 CRAN_LOCAL_MIRROR  := file://$(R_PROJECT_BASE_DIR)/CRAN
 RUN_DIR            := $(CURDIR)/run
 DATA_DIR           := $(CURDIR)/data
+DATA_CORPUS_DIR    := $(CURDIR)/data-corpus
+DATA_CORPUS_FILE   := $(CURDIR)/data-corpus.tar.xz
 
 # variables
 MERGE_CSV := $(RUNR_DIR)/inst/merge-csv.R
@@ -26,12 +28,17 @@ ON_EACH_PACKAGE := $(MAKE) on-each-package
 
 .PHONY: \
   on-each-package \
+  consolidate-types \
   package-asserts \
   package-functions \
+  package-revdeps \
   propagatr-code \
-  propagatr-run
+  propagatr-run \
+  revdeps-code \
+  revdeps-run \
+  .compress-data-corpus
 
-all: consolidate-types
+all: consolidate-types revdeps-run
 
 clean:
 	-rm -fr $(RUN_DIR)
@@ -45,9 +52,10 @@ PROPAGATR_RUN_CSV     := $(RUN_DIR)/propagatr-run/run.csv
 REVDEPS_CODE_CSV      := $(RUN_DIR)/revdeps-code/runnable-code.csv
 REVDEPS_RUN_CSV       := $(RUN_DIR)/revdeps-run/run.csv
 
-ASSERTIONS_ALL_CSV    = $(DATA_DIR)/assertions-all.csv
-ASSERTIONS_FAILED_CSV = $(DATA_DIR)/assertions-failed.csv
-TYPEDECLARATION       = $(DATA_DIR)/TYPEDECLARATIONS
+ASSERTIONS_ALL_CSV    := $(DATA_DIR)/assertions-all.csv
+ASSERTIONS_FAILED_CSV := $(DATA_DIR)/assertions-failed.csv
+TYPEDECLARATION       := $(DATA_DIR)/TYPEDECLARATIONS
+TYPE_TRACES_CSV       := $(DATA_DIR)/type-traces.csv
 
 $(PACKAGE_FUNCTIONS_CSV): export OUTPUT_DIR=$(@D)
 $(PACKAGE_FUNCTIONS_CSV):
@@ -88,6 +96,9 @@ $(CONSOLIDATE_TYPES_CSV):
 	cat $(PACKAGES_FILE) | parallel cp -v "$(@D)/{1}/{1}" $(TYPEDECLARATION)
 
 	$(MERGE_CSV) "$(OUTPUT_DIR)" $(@F)
+
+$(TYPE_TRACES_CSV): $(CONSOLIDATE_TYPES_CSV)
+	cp $(CONSOLIDATE_TYPES_CSV) $(TYPE_TRACES_CSV)
 
 $(REVDEPS_CODE_CSV): $(PACKAGE_REVDEPS_FILE)
 $(REVDEPS_CODE_CSV): export OUTPUT_DIR=$(@D)
@@ -133,3 +144,9 @@ on-each-package:
     --workdir "$(OUTPUT_DIR)/{/}/" \
     $(RUNR_DIR)/inst/run-task.sh \
       $(TASK) "$(PACKAGES_SRC_DIR)/{1/}" $(ARGS)
+
+$(DATA_CORPUS_DIR): $(DATA_CORPUS_FILE)
+	tar xfvJ $(DATA_CORPUS_FILE)
+
+.compress-data-corpus:
+	tar cfvJ $(DATA_CORPUS_FILE) $(DATA_CORPUS_DIR)
