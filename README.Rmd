@@ -3,33 +3,29 @@ title: "OOPSLA20 Artifact - Designing Types for R, Empirically"
 authors: "Alexi Turcotte, Aviral Goel, Filip Krikava and Jan Vitek"
 output: 
   html_document: 
-    theme: journal
+    keep_md: yes
+    theme: united
     toc: yes
+    toc_float: yes
 editor_options: 
   chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
-library(viewer)
+library(rstudioapi)
 
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Artifact Description
+## Introduction
 
 This is the artifact for the OOPSLA 2020 paper *Designing Types for R, Empirically*.
-The aim is to:
-
-1.  show the tools that were developed to infer and assert types for R
-    functions,
-2.  demonstrate the entire pipeline used to infer types for R packages.
+The aim is to show the tools that were developed to infer and assert types for R functions and R packages.
 
 The artifact is composed of two parts: 
 
-1. a getting started guide that contains the setup instructions and a small
-   experiment to verify that all works, and
-2. a step-by-step instructions on how the tooling developed for this paper work
-   and a complete pipeline which reproduces the data reported in the paper.
+1. a _getting started guide_ that contains the setup instructions and a small experiment to verify that the artifact is usable, and
+2. a _step-by-step instructions_ how to run the tools developed for this paper and how to reproduce the data reported in the paper.
 
 ## Requirements 
 
@@ -54,10 +50,11 @@ and of course a corpus of R packages to be run.
 To make it more convenient we have build a docker image that has all these dependencies installed.
 The image can be pulled directly from [Docker HUB](https://hub.docker.com/r/prlprg/oopsla20-typer) or <a href="#building-image-locally">built locally</a>.
 To use the image, you will need:
-- [docker community edition](https://docs.docker.com/install/) version 18+, and 
-- bash.
+- git
+- bash, and
+- [docker community edition](https://docs.docker.com/install/) version 18+.
 
-This artifact requires about ~10GB of free space, depending on the number of packages that should be analyzed.
+This artifact requires about ~20GB of free space, depending on the number of packages that should be analyzed.
 It has been tested on Linux (Manjaro 19 and Ubuntu 18.04).
 
 ## Getting Started Guide
@@ -65,106 +62,115 @@ It has been tested on Linux (Manjaro 19 and Ubuntu 18.04).
 For the initial kick-the-tires phase, please go over the following steps to determine if the artifact is usable in your environment.
 
 1. Clone the artifact git repository
+   
+   In a terminal, run the following to get a copy of the artifact repository:
 
-```{sh eval=FALSE}
-git clone https://github.com/PRL-PRG/OOPSLA20-typer-artifact
-cd OOPSLA20-typer-artifact
-```
-
-We will refer to the directory in where the artifact is cloned as `$REPO`.
-The content of the artifact is discussed in <a href="#artifact-structure">later section</a>.
+   ```{sh eval=FALSE}
+   git clone https://github.com/PRL-PRG/OOPSLA20-typer-artifact
+   cd OOPSLA20-typer-artifact
+   ```
+  
+   We will refer to this directory as `$REPO`.
+   The content is discussed in <a href="#artifact-structure">later section</a>.
 
 1. Run RStudio from the artifact docker container
 
-A part of the artifact evaluation can be done from within an interactive session in an [RStudio](https://rstudio.com).
-The following command will pull the docker image and start an instance of RStudio at the port 8787.
-If you need to use an alternative port, you can specify it using `-p PORT` argument.
+   To make the artifact evaluation a bit more convenient, the docker image includes [RStudio](https://rstudio.com), a propular R IDE.
+   The following command will pull the docker image from Docker HUB and start an instance of RStudio on port 8787.
+   If you need to use an alternative port, you can specify it using `-p PORT` argument to the `run.sh` script.
+    
+   ```{sh eval=FALSE}
+   ./run.sh
+   ```
+    
+   Once you see an output like:
+    
+   ```text
+   [services.d] starting services
+   [services.d] done.
+   ```
+    
+   you should be able to access RStudio in your browser at [http://localhost:8787](http://localhost:8787).
+    
+   To terminate it, simply interrupt the process by pressing `Ctrl-C` / `Command-C`.
 
-```{sh eval=FALSE}
-./run.sh
-```
+1. Open this readme (`README.Rmd`) in RStudio
 
-Once you see an output like:
+   The rest of the steps in this guide can be done directly in the RStudio.
+   To do that, open this readme file `README.Rmd` file by either navigating to `File` -> `Open File...` menu item or
+   by running the following in the R interpreter:
+    
+   ```{r eval=FALSE}
+   navigateToFile("~/README.Rmd")
+   ```
+    
+   The file is written in [Rmarkdown](https://rmarkdown.rstudio.com/) (or Rmd), also referred to as notebooks.
+   It is essentially a markdown document with code snippets.
+   These snippets can be run directly from RStudio.
+   Rmd files can be also rendered (_knitted_) to various output file formats running all code snippes and embedding their outputs directly to the resulting file.
+   Next to this readme file, we use several of the Rmd files to analyze the data for the paper.
+    
+   The rest of the code snippets can be run from within R by either clicking the play icon next to the snipper or by placing cursor somewhere inside the snippet and pressing `Ctrl+Enter` / `Command+Enter`.
 
-```text
-[services.d] starting services
-[services.d] done.
-```
+1. Check that RStudio can load contractr package.
 
-you should be able to access RStudio in your browser at [http://localhost:8787](http://localhost:8787).
-
-To terminate it, simply interrupt the process by pressing `Ctrl-C` / `Command-C`.
-
-1. Open this `README.Rmd` in RStudio
-
-The rest of the steps can be done in the RStudio.
-To do that, open this `README.Rmd` file by either navigating to `File` -> `Open File...` menu item or
-by running:
-
-```{r eval=FALSE}
-navigateToFile("~/README.Rmd")
-```
-
-in the R interpreter.
-The rest of the command snippets can be run from within R by either clicking the play icon next to the snipper or pressing `Ctrl+Enter` / `Command+Enter`.
-
-1. Check that RStudio can see all installed packages.
-
-First, we need to make sure RStudio can load the `contractr` package.
-
-```{r eval=FALSE}
-library(contractr)
-```
-
-You shoud see an output similar to this:
-
-```
-Loading required package: roxygen2
-Added contract to 118 roxygen2 function(s)
-No type declarations found for package stats
-No type declarations found for package graphics
-No type declarations found for package grDevices
-No type declarations found for package utils
-No type declarations found for package datasets
-No type declarations found for package methods
-No type declarations found for package base
-No type declarations found for package contractr
-```
-
-What is means is discussed in a <a href="#types-for-r">later section</a>.
+   First, we need to make sure RStudio can load the `contractr` package.
+    
+   ```{r eval=FALSE}
+   library(contractr)
+   ```
+    
+   You shoud see an output similar to this:
+    
+   ```
+   Loading required package: roxygen2
+   Added contract to 118 roxygen2 function(s)
+   No type declarations found for package stats
+   No type declarations found for package graphics
+   No type declarations found for package grDevices
+   No type declarations found for package utils
+   No type declarations found for package datasets
+   No type declarations found for package methods
+   No type declarations found for package base
+   No type declarations found for package contractr
+   ```
+    
+   What is means is discussed in a <a href="#types-for-r">later section</a>.
 
 1. Knit `corpus-analysis.Rmd`
 
-Next, we try to build the corpus analyzing notebook.
-This can be done with the following command:
+   Next, we try to build the corpus analyzing notebook which provides data for the Chapter 5 of the paper.
+   This can be done with the following command:
+  
+   ```{r eval=FALSE}
+   rmarkdown::render("~/typeR/analysis/corpus-analysis.Rmd")
+   ```
+  
+   which, if successfull, generates an HTML file in `~/typeR/analysis/corpus-analysis.Rmd`.
+   To view it, either open it in the navigator on the right side or run:
 
-```{r eval=FALSE}
-rmarkdown::render("~/typeR/analysis/corpus-analysis.Rmd")
-```
-
-which, if successfull, generates an HTML file in `~/typeR/analysis/corpus-analysis.Rmd`.
-To view it, either open it in the navigator on the right side or run:
-
-```{r eval=FALSE}
-viewer("~/typeR/analysis/corpus-analysis.html")
-```
+   ```{r eval=FALSE}
+   viewer("~/typeR/analysis/corpus-analysis.html")
+   ```
+    
+   We will go over more details in a <a href="#corpus-analysis">later section</a>.
 
 1. Try to infer types for tiny corpus of just 2 packages
 
-TODO: Filip
-
-For the last test, we will try to run the type infering pipeline for two packages.
-
-This has to be done in a terminal. 
-Navigate to the `$REPO/typeR` and run the following:
-
-```{sh eval=FALSE}
-./in-docker.sh make tasks/infer-types PACKAGES_FILE=packages-tiny-corpus.txt JOBS=1
-```
-
-The `make` command must be prefixed with `in-docker.sh` as we want to run it inside a docker container.
-
-TODO describe the result
+   TODO: Filip
+  
+   For the last test, we will try to run the type infering pipeline for two packages.
+  
+   This has to be done in a terminal. 
+   Navigate to the `$REPO/typeR` and run the following:
+  
+   ```{sh eval=FALSE}
+   ./in-docker.sh make tasks/infer-types PACKAGES_FILE=packages-tiny-corpus.txt JOBS=1
+   ```
+  
+   The `make` command must be prefixed with `in-docker.sh` as we want to run it inside a docker container.
+  
+   TODO describe the result
 
 This concludes the getting started guide and the kick the tires part.
 
@@ -255,6 +261,7 @@ viewer("~/typeR/analysis/evaluation.html")
 TODO: FILIP Chapter 6.3
 
 #### Corpus
+<a name="#corpus-analysis"/>
 
 In this section we show how to generate data presented in __Chapter 5 - Project
 Corpus_. We do this in a separate notebook:
@@ -279,13 +286,13 @@ This will generate the following files:
 
 - `corpus-analysis.html`: an HTML file rendering the notebook
 
-```{r}
+```{r eval=FALSE}
 viewer("~/typeR/analysis/corpus-analysis.html")
 ```
 
 - `corpus.tex`: a Latex file with the raw data to be included in the paper
 
-```{r}
+```{r eval=FALSE}
 viewer("~/typeR/paper/corpus.tex")
 ```
 
