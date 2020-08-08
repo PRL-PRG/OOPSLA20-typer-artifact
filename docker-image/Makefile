@@ -1,6 +1,6 @@
 .PHONY: image image-upload
 
-RUNR_VER := $(shell 2>/dev/null curl -s https://api.github.com/repos/PRL-PRG/runr/commits | 2>/dev/null jq -r '.[0].sha')
+RUNR_VER := $(shell 2>/dev/null curl -s https://api.github.com/repos/PRL-PRG/runr/commits?sha=typer-oopsla20 | 2>/dev/null jq -r '.[0].sha')
 ifndef RUNR_VER
 RUNR_VER := $(shell date +%s)
 endif
