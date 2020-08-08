@@ -21,8 +21,8 @@ BASE_PACKAGES <- c(
   "utils"
 )
 
-packages_corpus <- readLines("typeR/packages-corpus.txt")
-packages_base <- readLines("scripts/our-packages-dependencies.txt")
+packages_corpus <- readLines("../typeR/type-inference/packages-corpus.txt")
+packages_base <- readLines("our-packages-dependencies.txt")
 packages <- unique(c(packages_corpus, packages_base))
 
 dependencies <- unlist(tools::package_dependencies(packages, recursive=T))
