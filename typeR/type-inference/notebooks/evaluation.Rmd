@@ -3,7 +3,8 @@ title: "Designing Types for R, Empirically -- Paper Reproduction"
 output: html_notebook
 params: 
   data_dir: ~/typeR/type-inference/data-corpus
-  script_dir: ~/typeR/type-inference/scripts
+  scripts_dir: ~/typeR/type-inference/scripts
+  output_dir: ~/typeR/type-inference/evaluation
 ---
 
 This file contains the data and code for producing select Figures and Tables from the paper.
@@ -24,7 +25,7 @@ library(runr)
 library(tidyr)
 
 # Data manipulation functions.
-source(file.path(params$script_dir, "data-analysis-lib.R"))
+source(file.path(params$scripts_dir, "data-analysis-lib.R"))
 
 # Other functions for data processing.
 simplify_types <- function(type) {

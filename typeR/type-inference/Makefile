@@ -40,7 +40,7 @@ REVDEPS_RUN_CSV       := $(RUN_DIR)/revdeps-run/run.csv
 # data
 ASSERTIONS_ALL_CSV        := $(DATA_DIR)/assertions-all.csv
 ASSERTIONS_FAILED_CSV     := $(DATA_DIR)/assertions-failed.csv
-TYPEDECLARATIONS          := $(DATA_DIR)/TYPEDECLARATIONS
+TYPEDECLARATION           := $(DATA_DIR)/TYPEDECLARATION
 TYPE_TRACES_CSV           := $(DATA_DIR)/type-traces.csv
 TYPE_ANALYSIS_DIR         := $(DATA_DIR)/type-analysis
 TYPE_ANALYSIS_PACKAGE_DIR := $(TYPE_ANALYSIS_DIR)/packages
@@ -74,6 +74,7 @@ NOTEBOOKS := $(EVALUATION_HTML) $(PACKAGE_ASSERTS_HTML) $(CORPUS_ANALYSIS_HTML)
 all: $(DATA_DIR) $(EVALUATION_HTML)
 
 clean:
+	-rm -fr $(DATA_DIR)
 	-rm -fr $(RUN_DIR)
 
 $(EVALUATION_HTML): $(DATA_DIR)
@@ -125,13 +126,13 @@ $(CONSOLIDATE_TYPES_CSV):
 	$(ON_EACH_PACKAGE) TASK=$(CURDIR)/scripts/consolidate-types.R \
     ARGS="$(dir $(PROPAGATR_RUN_CSV)) $(dir $(PACKAGE_FUNCTIONS_CSV))"
 
-	-rm -fr $(TYPEDECLARATIONS)
-	-mkdir -p $(TYPEDECLARATIONS)
-	cat $(PACKAGES_FILE) | parallel cp -v "$(@D)/{1}/{1}" $(TYPEDECLARATIONS)
+	-rm -fr $(TYPEDECLARATION)
+	-mkdir -p $(TYPEDECLARATION)
+	cat $(PACKAGES_FILE) | parallel cp -v "$(@D)/{1}/{1}" $(TYPEDECLARATION)
 
 	$(MERGE_CSV) "$(OUTPUT_DIR)" $(@F)
 
-$(TYPEDECLARATIONS): $(CONSOLIDATE_TYPES_CSV)
+$(TYPEDECLARATION): $(CONSOLIDATE_TYPES_CSV)
 
 $(TYPE_TRACES_CSV): $(CONSOLIDATE_TYPES_CSV)
 	cp $(CONSOLIDATE_TYPES_CSV) $(TYPE_TRACES_CSV)
@@ -151,36 +152,35 @@ $(REVDEPS_CODE_CSV):
 $(REVDEPS_RUN_CSV): $(REVDEPS_CODE_CSV) $(CONSOLIDATE_TYPES_CSV)
 $(REVDEPS_RUN_CSV): export OUTPUT_DIR=$(@D)
 $(REVDEPS_RUN_CSV): export START_XVFB=1
-$(REVDEPS_RUN_CSV): export CONTRACTR_TYPEDECLARATION=$(TYPEDECLARATIONS)
+$(REVDEPS_RUN_CSV): export CONTRACTR_TYPEDECLARATION=$(TYPEDECLARATION)
 $(REVDEPS_RUN_CSV):
 	$(ON_EACH_PACKAGE) TASK=$(CURDIR)/scripts/run-extracted-code-contractr.R \
     PACKAGES_FILE=$(PACKAGE_REVDEPS_FILE) \
     ARGS="$(dir $(REVDEPS_CODE_CSV))/{1/}"
 	$(MERGE_CSV) "$(OUTPUT_DIR)" $(@F) $(notdir $(ASSERTIONS_ALL_CSV)) $(notdir $(ASSERTIONS_FAILED_CSV))
 
-$(TYPE_ANALYSIS_MERGED_FILE): $(TYPE_ANALYZER) $(TYPEDECLARATIONS)
-	-$(RM) -fr $(TYPE_ANALYSIS_PACKAGE_DIR)
-	-$(MKDIR) $(TYPE_ANALYSIS_PACKAGE_DIR)
+$(TYPE_ANALYSIS_MERGED_FILE): $(TYPE_ANALYZER) $(TYPEDECLARATION)
+	-rm -fr $(TYPE_ANALYSIS_PACKAGE_DIR)
+	-mkdir -p $(TYPE_ANALYSIS_PACKAGE_DIR)
 
-	@echo "Analyzing types from $(TYPEDECLARATIONS) into $(TYPE_ANALYSIS_PACKAGE_DIR) ..."
-	@for file in $(TYPEDECLARATIONS)/*; do \
+	@echo "Analyzing types from $(TYPEDECLARATION) into $(TYPE_ANALYSIS_PACKAGE_DIR) ..."
+	for file in $(TYPEDECLARATION)/*; do \
 	    echo "Analyzing '$$file'"; \
 	    $(TYPE_ANALYZER) $$file $(TYPE_ANALYSIS_PACKAGE_DIR)/`basename $$file`.csv; \
 	done
 
 	@echo "Merging package type analysis files into $(TYPE_ANALYSIS_MERGED_FILE) ..."
-	$(R) -e "readr::write_csv(do.call(rbind, lapply(Sys.glob('$(TYPE_ANALYSIS_PACKAGE_DIR)/*.csv'), readr::read_csv)), '$(TYPE_ANALYSIS_MERGED_FILE)')"
+	R --slave -q -e "readr::write_csv(do.call(rbind, lapply(Sys.glob('$(TYPE_ANALYSIS_PACKAGE_DIR)/*.csv'), readr::read_csv)), '$(TYPE_ANALYSIS_MERGED_FILE)')"
 
-$(DATA_DIR): \
-  $(TYPE_TRACES_CSV) \
-  $(TYPEDECLARATIONS) \
+data: $(TYPE_TRACES_CSV) \
+  $(TYPEDECLARATION) \
   $(ASSERTIONS_ALL_CSV) \
   $(ASSERTIONS_FAILED_CSV) \
   $(TYPE_ANALYSIS_MERGED_FILE)
 
 corpus-analysis:    $(CORPUS_ANALYSIS_HTML)
 evaluation-asserts: $(EVALUATION_ASSERTS_HTML)
-evalation:          $(EVALUATION_HTML)
+evaluation:         $(EVALUATION_HTML)
 
 consolidate-types: $(CONSOLIDATE_TYPES_CSV)
 package-asserts:   $(PACKAGE_ASSERTS_CSV)
