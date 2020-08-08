@@ -9,9 +9,9 @@ output:
 editor_options: 
   chunk_output_type: console
 params:
-  data_dir: ~/typer/type-inference/data
-  scripts_dir: ~/typer/type-inference/scripts
-  output_dir: ~/typer/type-inference/evaluation
+  data_dir: ~/typeR/data
+  scripts_dir: ~/typeR/scripts
+  output_dir: ~/typeR/evaluation
   min_revdeps: 5
   min_coverage: .65
   package_size_outlier: 5000

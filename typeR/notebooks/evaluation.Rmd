@@ -2,17 +2,17 @@
 title: "Designing Types for R, Empirically -- Paper Reproduction"
 output: html_notebook
 params: 
-  data_dir: ~/typeR/type-inference/data-corpus
-  scripts_dir: ~/typeR/type-inference/scripts
-  output_dir: ~/typeR/type-inference/evaluation
+  data_dir: ~/typeR/data-corpus
+  scripts_dir: ~/typeR/scripts
+  output_dir: ~/typeR/evaluation
 ---
 
 This file contains the data and code for producing select Figures and Tables from the paper.
 As the data is available, feel free to play with the data frames and explore!
 
 Note: At the top of this file, you'll find the `data_dir` parameter.
-Setting `data_dir` to `~/typeR/type-inference/data-corpus` will yield the results found in the paper.
-Setting `data_dir` to `~/typeR/type-inference/data` will allow you to look at the results of your local run of the analysis.
+Setting `data_dir` to `~/typeR/data-corpus` will yield the results found in the paper.
+Setting `data_dir` to `~/typeR/data` will allow you to look at the results of your local run of the analysis.
 
 This first bit of code is to load all the data and dependencies.
 
