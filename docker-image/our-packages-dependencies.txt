@@ -17,3 +17,5 @@ tibble
 tidyr
 withr
 dynutils
+gluedown
+tableschema.r

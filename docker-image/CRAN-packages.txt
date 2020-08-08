@@ -196,6 +196,7 @@ glasso 1.11
 glm2 1.2.1
 globals 0.12.5
 glue 1.4.1
+gluedown 1.0.2
 gmp 0.5-13.6
 gnm 1.1-1
 goftest 1.2-2
@@ -243,6 +244,7 @@ janeaustenr 0.1.5
 janitor 1.2.1
 jpeg 0.1-8.1
 jsonlite 1.6.1
+jsonvalidate 1.1.0
 kableExtra 1.1.0
 kappalab 0.4-7
 Kendall 2.2
@@ -523,6 +525,7 @@ survRM2 1.0-2
 svglite 1.2.3
 sys 3.3
 systemfonts 0.1.1
+tableschema.r 1.1.0
 tensor 1.5
 testit 0.11
 testthat 2.3.2
@@ -557,6 +560,7 @@ urltools 1.7.3
 usethis 1.6.1
 utf8 1.1.4
 uuid 0.1-4
+V8 3.0.1
 validate 0.9.3
 variables 1.0-3
 vcd 1.4-5

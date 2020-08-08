@@ -19,7 +19,7 @@ options(
       library(dplyr)
 
       contracts <- cbind(
-        package = package,
+        running_package = package,
         type = type,
         file = file,
         contracts
@@ -42,9 +42,10 @@ options(
         -call_trace
       )
 
-      dir.create(basename(path), showWarnings=FALSE)
-      readr::write_csv(all, file.path(basename(path), "assertions-all.csv"))
-      readr::write_csv(failed, file.path(basename(path), "assertions-failed.csv"))
+      dir <- basename(file)
+      dir.create(dir, showWarnings=FALSE)
+      readr::write_csv(all, file.path(dir, "assertions-all.csv"))
+      readr::write_csv(failed, file.path(dir, "assertions-failed.csv"))
     }
   }
 )
