@@ -118,13 +118,14 @@ RUN git clone https://github.com/PRL-PRG/injectr --branch typer-oopsla20 && \
 RUN git clone https://github.com/PRL-PRG/tastr --branch typer-oopsla20 && \
     make -C tastr CXX=g++
 
+ARG CONTRACTR_VERSION=unknown
 RUN git clone https://github.com/PRL-PRG/contractr --branch typer-oopsla20 && \
     R CMD INSTALL contractr
 
 RUN git clone https://github.com/PRL-PRG/propagatr --branch typer-oopsla20 && \
     $RDT_DIR/bin/R CMD INSTALL propagatr
 
-ARG RUNR_VER=unknown
+ARG RUNR_VERSION=unknown
 RUN git clone https://github.com/PRL-PRG/runr --branch typer-oopsla20 && \
     R CMD INSTALL runr
 
