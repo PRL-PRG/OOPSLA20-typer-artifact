@@ -61,7 +61,12 @@ env R_DIR=/$R_PROJECT_BASE_DIR/R-$R_VERSION \
     R_LIBS=/$R_PROJECT_BASE_DIR/library/$R_VERSION \
     PACKAGES_SRC_DIR=/$R_PROJECT_BASE_DIR/CRAN/extracted \
     PACKAGES_ZIP_DIR=/$R_PROJECT_BASE_DIR/CRAN/src/contrib \
-    CRAN_LOCAL_MIRROR=file:///$R_PROJECT_BASE_DIR/CRAN
+    CRAN_LOCAL_MIRROR=file:///$R_PROJECT_BASE_DIR/CRAN \
+    R_KEEP_PKG_SOURCE=1 \
+    R_ENABLE_JIT=0 \
+    R_COMPILE_PKGS=0 \
+    R_DISABLE_BYTECODE=1 \
+    OMP_NUM_THREADS=1
 
 # R
 RUN ./install-r.sh -d $R_DIR -v $R_VERSION
@@ -132,7 +137,6 @@ RUN git clone https://github.com/PRL-PRG/runr --branch typer-oopsla20 && \
 WORKDIR /
 
 env IN_DOCKER=1
-env OMP_NUM_THREADS=1
 
 # configure entrypoint
 ADD entrypoint.sh /

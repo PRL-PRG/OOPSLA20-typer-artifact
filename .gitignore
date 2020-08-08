@@ -10,3 +10,5 @@ typeR/evaluation/inst/type-analyzer
 /typeR/evaluation/data/
 /typeR/type-inference/data/
 /typeR/type-inference/data-corpus/
+/typeR/type-inference/evaluation/
+/typeR/type-inference/type-analyzer/type-analyzer

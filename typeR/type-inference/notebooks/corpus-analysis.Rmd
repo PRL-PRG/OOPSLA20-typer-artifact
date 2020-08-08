@@ -3,13 +3,15 @@ title: "Corpus Analysis"
 authors: "Alexi Turcotte, Aviral Goel, Filip Krikava and Jan Vitek"
 output: 
   html_document: 
-    keep_md: yes
     theme: united
     toc: yes
     toc_float: yes
 editor_options: 
   chunk_output_type: console
 params:
+  data_dir: ~/typer/type-inference/data
+  scripts_dir: ~/typer/type-inference/scripts
+  output_dir: ~/typer/type-inference/evaluation
   min_revdeps: 5
   min_coverage: .65
   package_size_outlier: 5000

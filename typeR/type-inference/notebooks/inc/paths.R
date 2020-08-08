@@ -1,32 +1,19 @@
-R_PROJECT_BASE_DIR <- "/R"
-R_VERSION <- "3.5"
-TYPER_BASE_DIR <- "~/typeR"
-
-EVALUATION_DIR <- path(TYPER_BASE_DIR, "evaluation")
-PAPER_DIR      <- path(TYPER_BASE_DIR, "paper")
-PLOT_DIR       <- path(PAPER_DIR, "plots")
-RUN_DIR        <- path(TYPER_BASE_DIR, "run")
-TAGS_DIR       <- PAPER_DIR
-
-fs::dir_create(
-  c(EVALUATION_DIR, PAPER_DIR, PLOT_DIR, RUN_DIR, TAGS_DIR), 
-  recurse=TRUE
-)
-
 ## all CRAN packages
-CRAN_PACKAGES_DETAILS   <- path(EVALUATION_DIR, "cran-details.csv")
-CRAN_REVDEPS            <- path(EVALUATION_DIR, "cran-revdeps.csv")
-CRAN_ASSERTS            <- path(EVALUATION_DIR, "cran-asserts.csv")
+CRAN_PACKAGES_DETAILS   <- path(params$data_dir, "cran", "cran-details.csv")
+CRAN_REVDEPS            <- path(params$data_dir, "cran", "cran-revdeps.csv")
+CRAN_ASSERTS            <- path(params$data_dir, "cran", "cran-asserts.csv")
 
 ## corpus only
-CORPUS_FILE                  <- path(EVALUATION_DIR, "corpus.txt")
-CORPUS_DETAILS               <- path(EVALUATION_DIR, "corpus-details.csv")
-CORPUS_REVDEPS               <- path(EVALUATION_DIR, "corpus-revdeps.csv")
-CORPUS_REVDEPS_UNIQUE        <- path(EVALUATION_DIR, "corpus-revdeps.txt")
-COVERAGE_REVDEP_FUNCTIONS    <- path(EVALUATION_DIR, "corpus-coverage-functions.csv")
+CORPUS_FILE                  <- path(params$output_dir, "corpus.txt")
+CORPUS_DETAILS               <- path(params$output_dir, "corpus-details.csv")
+CORPUS_REVDEPS               <- path(params$output_dir, "corpus-revdeps.csv")
+CORPUS_REVDEPS_UNIQUE        <- path(params$output_dir, "corpus-revdeps.txt")
+COVERAGE_REVDEP_FUNCTIONS    <- path(params$output_dir, "corpus-coverage-functions.csv")
 
 ## plots
-CORPUS_PLOT           <- path(PLOT_DIR, "corpus.pdf")
+CORPUS_PLOT           <- path(params$output_dir, "corpus.pdf")
 
 ## asserts
-PACKAGE_ASSERTS       <- path(RUN_DIR, "package-asserts", "package-asserts.csv")
+PACKAGE_ASSERTS       <- path(params$data_dir, "package-asserts.csv")
+
+TAGS_DIR <- path(params$output_dir, ".")

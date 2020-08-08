@@ -1,8 +1,17 @@
 ---
-title: "Package asserts"
-output: html_document
+title: "Evaluation - package  asserts"
+authors: "Alexi Turcotte, Aviral Goel, Filip Krikava and Jan Vitek"
+output: 
+  html_document: 
+    theme: united
+    toc: yes
+    toc_float: yes
 editor_options: 
   chunk_output_type: console
+params:
+  data_dir: ~/typer/type-inference/data
+  scripts_dir: ~/typer/type-inference/scripts
+  output_dir: ~/typer/type-inference/evaluation
 ---
 
 ```{r setup, include=FALSE}
@@ -10,6 +19,7 @@ suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(DT))
 suppressPackageStartupMessages(library(fs))
 suppressPackageStartupMessages(library(lubridate))
+suppressPackageStartupMessages(library(purrr))
 suppressPackageStartupMessages(library(readr))
 suppressPackageStartupMessages(library(stringr))
 
@@ -21,29 +31,6 @@ source("inc/latextags.R")
 
 create_tags(path(TAGS_DIR, "package-asserts.tex"), prefix="", default=TRUE)
 ```
-
-## Setup
-
-The `r CRAN_ASSERTS` file contains information about the use of assertions across packages.
-To generate it, run the following:
-
-```sh
- /R/rapr/inst/map.sh --task ./rapr/inst/tasks/package-assertions.R
-```
-
-or (with a `PACKAGES` variable set to restrict the package selection)
-
-```
-PACKAGES=packages-typer-35.txt ./rapr/inst/on-each-package.sh ./rapr/inst/tasks/find-runtime-type-checks.R
-```
-
-and then
-
-```
-env-rscript ./rapr/inst/process-csv-result.R run/find-runtime-type-checks runtime-checks.csv
-```
-
-to generate the CSV file.
 
 ## Data
 
