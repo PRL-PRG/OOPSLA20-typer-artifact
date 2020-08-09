@@ -175,6 +175,9 @@ _Note:_ Even though it just one package, the pipeline runs all its reverse depen
 On a Linux laptop (i7-7560U, 16GB RAM) it takes ~10 minutes to run.
 
 The `make` command must be prefixed with `in-docker.sh` as we want to run it inside a docker container.
+The `$REPO/typeR` directory is mounted into `/home/rstudio/typeR` inside the container.
+All files stored there will be persisted.
+
 The `PACKAGES_FILE` parameter specify which package corpus we want to use. A package corpus is a simple text file with one package name at a time.
 In general, you could specify any package, but to keep the docker image size in a reasonable bounds, we only include a small subset of the 15K CRAN packages.
 
@@ -499,6 +502,8 @@ This is used in the next two sections.
 The reason why we include them here is that these were the most resource intensive to generate.
 This is because we needed to get the information about package code coverage and package reverse dependencies code coverage.
 It on itself took about 2 days of run on 72 cores machine.
+
+All results are store in `~/typeR/evaluation` directory.
 
 #### Expressiveness & Robustness
 
