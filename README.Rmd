@@ -3,8 +3,6 @@ title: "OOPSLA20 Artifact - Designing Types for R, Empirically"
 editor_options:
   chunk_output_type: console
 output:
-  pdf_document:
-    toc: yes
   html_document:
     keep_md: yes
     theme: united
@@ -29,6 +27,9 @@ The artifact is composed of two parts:
 1. a _getting started guide_ that contains the setup instructions and a small experiment to verify that the artifact is usable, and
 2. a _step-by-step instructions_ how to run the tools developed for this paper and how to reproduce the data reported in the paper.
 
+_Note_: This document contains output from executing R code whose line width spans over what can comfortably fit on an A4 format in the PDF.
+It is therefore much nicer to work with the HTML version or directly have it opened in RStudio (cf. below).
+
 ## Requirements 
 
 The pipeline depends on a number of tools and R packages:
@@ -39,13 +40,13 @@ The pipeline depends on a number of tools and R packages:
 - GNU bison >= 3.5
 - GNU make >= 4.1
 - [R](https://cran.r-project.org) == 3.5.0
-- [R-dyntrace](https://github.com/PRL-PRG/R-dyntrace) 3.5.0
+- [R-dyntrace](https://github.com/PRL-PRG/R-dyntrace/tree/r-3.5.0) 3.5.0
 - a number of our R packages with their dependencies
-  - [contractr](https://github.com/PRL-PRG/contractr) - runtime type assertions
-  - [injectr](https://github.com/PRL-PRG/injectr) - for injecting code into R functions
-  - [propagatr](https://github.com/PRL-PRG/propagatr) - tracing type usage
-  - [runr](https://github.com/PRL-PRG/runr) - running the experiments
-  - [tastr](https://github.com/PRL-PRG/tastr) - grammar and parser for our R types
+  - [contractr](https://github.com/PRL-PRG/contractr/tree/typer-oopsla20) - runtime type assertions
+  - [injectr](https://github.com/PRL-PRG/injectr/tree/typer-oopsla20) - for injecting code into R functions
+  - [propagatr](https://github.com/PRL-PRG/propagatr/tree/typer-oopsla20) - tracing type usage
+  - [runr](https://github.com/PRL-PRG/runr/tree/typer-oopsla20) - running the experiments
+  - [tastr](https://github.com/PRL-PRG/tastr/tree/typer-oopsla20) - grammar and parser for our R types
 
 and of course a corpus of R packages to be run.
 
@@ -63,147 +64,157 @@ It has been tested on Linux (Manjaro 19 and Ubuntu 18.04).
 
 For the initial kick-the-tires phase, please go over the following steps to determine if the artifact is usable in your environment.
 
-1. Clone the artifact git repository
+### Clone the artifact git repository
    
-   In a terminal, run the following to get a copy of the artifact repository:
+In a terminal, run the following to get a copy of the artifact repository:
 
-   ```{sh eval=FALSE}
-   git clone https://github.com/PRL-PRG/OOPSLA20-typer-artifact
-   cd OOPSLA20-typer-artifact
-   ```
-  
-   We will refer to this directory as `$REPO`.
-   
-   The artifact has the follwing structure:
-   
-   ```
-   .
-   ├── docker-image -- files needed to build the image
-   ├── README.Rmd   -- this readme in R markdown format
-   ├── README.md    -- this readme in markdown format
-   ├── run.sh       -- script to run Rstudio
-   └── typeR        -- directory in which the type inference pipeline runs
-       ├── data-corpus.tar.xz   -- archived data from analyzing the full 412 package corpus
-       ├── in-docker.sh         -- a helper script executinig given command in a container
-       ├── Makefile             -- makefile orchestrating the type inference pipeline
-       ├── notebooks            
-       │   ├── corpus-analysis.Rmd     -- data points for paper's Chapter 5
-       │   ├── evaluation-asserts.Rmd  -- data points for paper's Chapter 6.3
-       │   ├── evaluation.Rmd          -- data points for paper's Chapter 6.{1,2}
-       │   └── inc                     -- auxiliary R files for data analysis
-       ├── packages-corpus.txt         -- list of the 412 packages
-       ├── packages-small-corpus.txt   -- a smaller corpus to be run during the artifact evaluation
-       ├── packages-tiny-corpus.txt    -- a tiny corpus to be run during the kcik the tires phase
-       ├── scripts                     -- auxiliary scripts
-       └── type-analyzer               -- type analyzer source code
-   ```
+```{sh eval=FALSE}
+git clone https://github.com/PRL-PRG/OOPSLA20-typer-artifact
+cd OOPSLA20-typer-artifact
+```
 
-1. Run RStudio from the artifact docker container
+We will refer to this directory as `$REPO`.
 
-   To make the artifact evaluation a bit more convenient, the docker image includes [RStudio](https://rstudio.com), a propular R IDE.
-   The following command will pull the docker image from Docker HUB and start an instance of RStudio on port 8787.
-   If you need to use an alternative port, you can specify it using `-p PORT` argument to the `run.sh` script.
-    
-   ```{sh eval=FALSE}
-   ./run.sh
-   ```
-    
-   Once you see an output like:
-    
-   ```text
-   [services.d] starting services
-   [services.d] done.
-   ```
-    
-   you should be able to access RStudio in your browser at [http://localhost:8787](http://localhost:8787).
-    
-   To terminate it, simply interrupt the process by pressing `Ctrl-C` / `Command-C`.
+The artifact has the following structure:
 
-1. Open this readme (`README.Rmd`) in RStudio
+```
+.
+├── docker-image -- files needed to build the image
+├── README.Rmd   -- this readme in R markdown format
+├── README.md    -- this readme in markdown format
+├── run.sh       -- script to run Rstudio
+└── typeR        -- directory in which the type inference pipeline runs
+    ├── data-corpus.tar.xz   -- archived data from analyzing the full 412 package corpus
+    ├── in-docker.sh         -- a helper script executinig given command in a container
+    ├── Makefile             -- makefile orchestrating the type inference pipeline
+    ├── notebooks            
+    │   ├── corpus-analysis.Rmd     -- data points for paper's Chapter 5
+    │   ├── evaluation-asserts.Rmd  -- data points for paper's Chapter 6.3
+    │   ├── evaluation.Rmd          -- data points for paper's Chapter 6.{1,2}
+    │   └── inc                     -- auxiliary R files for data analysis
+    ├── packages-corpus.txt         -- list of the 412 packages
+    ├── packages-small-corpus.txt   -- a smaller corpus to be run during the artifact evaluation
+    ├── packages-tiny-corpus.txt    -- a tiny corpus to be run during the kcik the tires phase
+    ├── scripts                     -- auxiliary scripts
+    └── type-analyzer               -- type analyzer source code
+```
 
-   The rest of the steps in this guide can be done directly in the RStudio.
-   To do that, open this readme file `README.Rmd` file by either navigating to `File` -> `Open File...` menu item or
-   by running the following in the R interpreter:
-    
-   ```{r eval=FALSE}
-   navigateToFile("~/README.Rmd")
-   ```
-    
-   The file is written in [Rmarkdown](https://rmarkdown.rstudio.com/) (or Rmd), also referred to as notebooks.
-   It is essentially a markdown document with code snippets.
-   These snippets can be run directly from RStudio.
-   Rmd files can be also rendered (_knitted_) to various output file formats running all code snippes and embedding their outputs directly to the resulting file.
-   Next to this readme file, we use several of the Rmd files to analyze the data for the paper.
-    
-   The rest of the code snippets can be run from within R by either clicking the play icon next to the snipper or by placing cursor somewhere inside the snippet and pressing `Ctrl+Enter` / `Command+Enter`.
+### Run RStudio from the artifact docker container
 
-1. Check that RStudio can load contractr package.
+To make the artifact evaluation a bit more convenient, the docker image includes [RStudio](https://rstudio.com), a popular R IDE.
+The following command will pull the docker image from Docker HUB and start an instance of RStudio on port 8787.
+If you need to use an alternative port, you can specify it using `-p PORT` argument to the `run.sh` script.
+ 
+```{sh eval=FALSE}
+./run.sh
+```
+ 
+Once you see an output like:
+ 
+```text
+[services.d] starting services
+[services.d] done.
+```
+ 
+you should be able to access RStudio in your browser at [http://localhost:8787](http://localhost:8787).
+ 
+To terminate it, simply interrupt the process by pressing `Ctrl-C` / `Command-C`.
 
-   First, we need to make sure RStudio can load the `contractr` package.
-    
-   ```{r eval=FALSE}
-   library(contractr)
-   ```
-    
-   You shoud see an output similar to this:
-    
-   ```
-   Loading required package: roxygen2
-   Added contract to 118 roxygen2 function(s)
-   No type declarations found for package stats
-   No type declarations found for package graphics
-   No type declarations found for package grDevices
-   No type declarations found for package utils
-   No type declarations found for package datasets
-   No type declarations found for package methods
-   No type declarations found for package base
-   No type declarations found for package contractr
-   ```
-    
-   What is means is discussed in a <a href="#types-for-r">later section</a>.
+### Open this readme (`README.Rmd`) in RStudio
 
-1. Try to infer types for tiny corpus of just 2 packages
+The rest of the steps in this guide can be done directly in the RStudio.
+To do that, open this readme file `README.Rmd` file by either navigating to `File` -> `Open File...` menu item 
+ 
+The file is written in [Rmarkdown](https://rmarkdown.rstudio.com/) (or Rmd), also referred to as notebooks.
+It is essentially a markdown document with code snippets.
+These snippets can be run directly from RStudio.
+Rmd files can be also rendered (_knitted_) to various output file formats running all code snippets and embedding their outputs directly to the resulting file.
+Next to this readme file, we use several of the Rmd files to analyze the data for the paper.
+ 
+The rest of the R code snippets can be run from within R by either clicking the play icon next to the snippet or by placing cursor somewhere inside the snippet and pressing `Ctrl+Enter` / `Command+Enter`.
 
-   For the last test, we will try to run the type infering pipeline for a single package: stringr.
-  
-   This has to be done in a terminal. 
-   Navigate to the `$REPO/typeR` and run the following:
-  
-   ```{sh eval=FALSE}
-   ./in-docker.sh make clean all PACKAGES_FILE=packages-tiny-corpus.txt 
-   ```
-  
-   The `make` command must be prefixed with `in-docker.sh` as we want to run it inside a docker container.
-  
-   The result should be `$REPO/typeR/data` with the following files:
-   
-   ```
-   data
-   ├── assertions-all.csv
-   ├── assertions-failed.csv
-   ├── type-analysis
-   │   ├── merged.csv
-   │   └── packages
-   │       └── stringr.csv
-   ├── TYPEDECLARATION
-   │   └── stringr           -- the actual inferred types
-   └── type-traces.csv
-   ```
+### Check that RStudio can load contractr package.
 
-   The `data/assertions-all.csv` file contains all the assertions.
-   The `data/assertions-failed.csv` file contains only failed assertions.
-   The `data/type-analysis/packages/<package>.csv` file contains information about type signatures of `<package>` functions.
-   The `data/type-analysis/merged.csv` file contains information about type signatures of functions from all packages.
-   The `data/TYPEDECLARATION/<package>` files contain type declarations for all functions from the traced packages.
-   The `data/type-traces.csv` file contains type traces obtained from dynamic analysis of package code.
+First, we need to make sure RStudio can load the `contractr` package.
+ 
+```{r eval=FALSE}
+library(contractr)
+```
+ 
+You should see an output similar to this:
+ 
+```
+Loading required package: roxygen2
+Added contract to 118 roxygen2 function(s)
+No type declarations found for package stats
+No type declarations found for package graphics
+No type declarations found for package grDevices
+No type declarations found for package utils
+No type declarations found for package datasets
+No type declarations found for package methods
+No type declarations found for package base
+No type declarations found for package contractr
+```
+ 
+What is means is discussed in a <a href="#types-for-r">later section</a>.
 
-This concludes the getting started guide and the kick the tires part.
+### Infer types for one package
+
+For the last test, we will try to run the type inferring pipeline for a single package: [stringr](https://cran.r-project.org/web/packages/stringr/index.html).
+
+This has to be done in a terminal. 
+Navigate to the `$REPO/typeR` and run the following:
+
+```sh
+./in-docker.sh make clean all PACKAGES_FILE=packages-tiny-corpus.txt 
+```
+
+_Note:_ Even though it just one package, the pipeline runs all its reverse dependencies to capture type check assertions which might take some time.
+On a Linux laptop (i7-7560U, 16GB RAM) it takes ~10 minutes to run.
+
+The `make` command must be prefixed with `in-docker.sh` as we want to run it inside a docker container.
+The `PACKAGES_FILE` parameter specify which package corpus we want to use. A package corpus is a simple text file with one package name at a time.
+In general, you could specify any package, but to keep the docker image size in a reasonable bounds, we only include a small subset of the 15K CRAN packages.
+
+The result should be `$REPO/typeR/data` with the following files:
+
+```
+data
+├── assertions-all.csv     
+├── assertions-failed.csv  
+├── type-analysis    
+│   ├── merged.csv         
+│   └── packages
+│       └── stringr.csv    
+├── TYPEDECLARATION
+│   └── stringr            -- the actual inferred types for contractr
+└── type-traces.csv        
+```
+
+- `data/assertions-all.csv`: file contains all the assertions.
+- `data/assertions-failed.csv`: file contains only failed assertions with additional details for debugging.
+- `data/type-analysis/packages/<package>.csv`: file contains information about type signatures of `<package>` functions.
+- `data/type-analysis/merged.csv`: file contains information about type signatures of functions from all packages.
+- `data/TYPEDECLARATION/<package>`: files contain contractr type declarations for all recorded functions for a given package.
+- `data/type-traces.csv`: file contains type traces obtained from dynamic analysis of package code.
+
+Once completed, you can see the inferred types for the stringr package:
+```{r eval=FALSE}
+navigateToFile("~/typeR/data/TYPEDECLARATION/stringr")
+```
+
+*This concludes the getting started guide and the kick the tires part.*
 
 ## Step-by-step Instructions
 
+In this section we will provide more details about the tooling and the type inference pipeline.
+We start with a quick tutorial about how the contractr package work.
+Next, we will infer types for a small corpus.
+Finally, using the original data, we will reproduce the data points provided in the paper.
+
 ### Quick Tutorial
 
-This should happen in Rstudio
+The best is to interactively follow the tutorial in RStudio, running the code snippets one by one.
 
 #### contractr
 <a name="#types-for-r"/>
@@ -213,7 +224,7 @@ signatures. It modifies the function body to check for function argument and
 return value types. Let us look at how this library works.
 
 First we load `contractr`. It depends on the R package `roxygen2`, which gets
-loaded as well. `contractr` comes equipped with type declarations for 395
+loaded as well. `contractr` comes equipped with [type declarations](https://github.com/PRL-PRG/contractr/tree/typer-oopsla20/inst/TYPEDECLARATION) for 395
 packages, `roxygen2` being one of them. As shown in the console output below,
 when `roxygen2` is loaded, `contractr` automatically inserts contracts to it's
 118 functions. In general, `contractr` sets up package load hooks. So if any of
@@ -423,13 +434,41 @@ and discussed the following salient aspects of its design.
 - API to enable and disable contract assertions for code blocks
 
 
-#### Inferring Types from R Code
+### Inferring Types from R Code
 
-FILIP
+In this section we run the type inference pipeline on a small corpus of 5 packages:
 
-- run one package
-- show the required steps
-- and how to get to merged.csv
+```{r results='asis'}
+cat(paste("-", readLines("~/typeR/packages-small-corpus.txt")), sep="\n")
+```
+
+The reason why we run only 5 packages is that (1) the dynamic tracing is quite resource intensive as all invocations are recorded and (2) running 12M of R lines (runnable code of the corpus + reverse dependencies) takes a lot of time.
+
+Running the small corpus is similar to the tiny one in the above getting started guide:
+
+```sh
+./in-docker.sh make clean all
+```
+
+This time, we do not need to not need to specify the `PACKAGES_FILE` as the `packages-small-corpus.txt` is the default.
+
+The type inference pipeline does the following:
+
+1. `package-functions`: get information about all exported functions from a package (`runs/package-functions/functions.csv`),
+2. `propagatr-code`: extract the runnable code from a package and wrap it inside a tracing block,
+3. `propagatr-run`: run the code using [R-dyntrace](https://github.com/PRL-PRG/R-dyntrace), a modified R VM with a support for dynamic tracing (cf. [more information](https://zenodo.org/record/3625397#.Xy-9pWNfgUE)) recording all types seen at function invocations,
+4. `consolidate-types`: consolidate recorded types,
+5. `package-revdeps`: find packages' reverse dependencies,
+6. `revdeps-code`: extract runnable code from these dependencies, and finally
+7. `revdeps-run`: run this code with contractr enabled using type definitions inferred in the step 4.
+
+Each of this task has a target in the makefile (`~/typeR/Makefile`).
+The intermediate results of these steps are stored in `~/typeR/run` directory.
+We use [GNU parallel](https://www.gnu.org/software/parallel/) and [runr](https://github.com/PRL-PRG/runr/tree/typer-oopsla20).
+
+The makefile has a few arguments:
+- `TIMEOUT` set to 30 minutes by default - if any of the above tasks per package takes longer, it will be terminated
+- `JOBS` the number of jobs to be run in parallel. The default for this artifact is 1.
 
 ### Redoing the Paper Experiment
 
@@ -437,30 +476,41 @@ In this section, we present an R Notebook capable of reproducing the figures and
 
 To obtain the data for the paper, we conducted an experiment wherein we chose a subset of CRAN packages with > 5 reverse dependencies and > 65% code coverage.
 We ran our type tracing tool on the runnable test, example, and vignette code for these packages, and obtained types for exported package functions.
-Then, we loaded those types into the aformentioned `contractr` tool, and ran the test, example, and vignette code of the clients of our core corpus.
+Then, we loaded those types into the aforementioned `contractr` tool, and ran the test, example, and vignette code of the clients of our core corpus.
 We recorded contract assertion successes and failures during this stage of the evaluation.
 
 As you may guess, the data we worked with is too large to be reasonably processed on standard computers.
-Our data collection and processing pipeline ran on the order of days on a powerful server with 72 cores and 255GB of RAM.
+Our data collection and processing pipeline ran on the order of days on a server with 72 cores and 256GB of RAM.
 To that end, we packaged our data and include it with this artifact.
 The data itself is liable to be useful to any future type-based research of R.
-
-Note: as you conduct your evaluation, you will find a number of small discrepancies between the numbers seen here and those in the paper.
-Running large experiments involves random failures, nondeterministic function behaviour, and weird environment configurations leading to sporadic issues.
-These discrepancies are very minor, amounting to differences on the order of fractions of a percent, and we don't believe this issue to be a cause for major concern.
-
-We refer the reader to `~/typeR/notebooks/evaluation.Rmd` for the analysis. 
-
 
 To rerun the analysis, first we have to extract the data for the entire corpus:
 
 ```sh
-./in-docker.sh make data-corpus-dir
+./in-docker.sh make data-corpus
 ```
 
 These should gives us similar files as in the previous section where we only analyzed a few packages.
+The additional `cran` directory and `corpus-details.csv` include package metadata obtained for the entire CRAN and the corpus of 412 packages respectively.
+This is used in the next two sections.
+The reason why we include them here is that these were the most resource intensive to generate.
+This is because we needed to get the information about package code coverage and package reverse dependencies code coverage.
+It on itself took about 2 days of run on 72 cores machine.
 
-Next step is to render the `evaluation.Rmd` using:
+#### Expressiveness & Robustness
+
+In this section we show how to generate data presented in _Section 6.1 Expressiveness_ and _Section 6.2 Robustness_.
+We do this in a separate notebook: `~/typeR/notebooks/evaluation.Rmd`.
+
+```{r eval=FALSE}
+navigateToFile("~/typeR/notebooks/evaluation.Rmd")
+```
+
+_Note:_ As you conduct your evaluation, you will find a number of small discrepancies between the numbers seen here and those in the paper.
+Running large experiments involves random failures, non-deterministic function behavior, and weird environment configurations leading to sporadic issues.
+These discrepancies are very minor, amounting to differences on the order of fractions of a percent, and we don't believe this issue to be a cause for major concern.
+
+Rendering the `evaluation.Rmd` can be done by running:
 
 ```sh
 ./in-docker.sh make evaluation
@@ -468,30 +518,52 @@ Next step is to render the `evaluation.Rmd` using:
 
 #### Assertions
 
-TODO: FILIP Chapter 6.3
+In this section we show how to generate data presented in _Section 6.3 Usefulness of the Type Checking Framework_.
+We do this in a separate notebook: `~/typeR/notebooks/evaluation-asserts.Rmd`.
+
+This notebook uses two inputs:
+
+- `data-corpus/corpus-details.cvs` - metadata of the corpus 412 packages
+- `data-corpus/cran/cran-asserts.csv` - information about the use of runtime assertions.
+
+The latter has been generated by a makefile target (`package-asserts`).
+This task runs an R script which loads an AST of each function in a given package and look for calls to one of the R runtime assertion functions (e.g. [stopifnot](https://stat.ethz.ch/R-manual/R-devel/library/base/html/stopifnot.html) or [assertthat](https://cran.r-project.org/web/packages/assertthat/index.html)).
+
+
+To render this notebook, in `$REPO/typeR` run:
+
+```sh
+./in-docker.sh make evaluation-asserts
+```
+
+Once finished, the resulting HTML file can be viewed by:
+
+```{r eval=FALSE}
+viewer("~/typeR/evaluation/evaluation-asserts.html")
+```
+
+This also produce a corresponding Latex tags to be included in the paper:
+
+```{r eval=FALSE}
+viewer("~/typeR/evaluation/package-asserts.tex")
+```
 
 #### Corpus
 <a name="#corpus-analysis"/>
 
-TODO: FILIP
-
-In this section we show how to generate data presented in __Chapter 5 - Project
-Corpus_. We do this in a separate notebook:
-`~/typeR/analysis/corpus-analysis.Rmd`.
-If you have completed the getting started guide, you have already ran this notebook.
-Here we give more details about how it works.
+In this section we show how to generate data presented in _Chapter 5 - Project Corpus_.
+We do this in a separate notebook: `~/typeR/notebooks/corpus-analysis.Rmd`.
 
 It loads the metadata collected for the whole of CRAN, namely:
-- TODO ``
-- TODO ``
+- `cran-details.csv` - CRAN packages metadata including code coverage and reverse dependencies code coverage
+- `cran-revdeps.csv` - reverse dependencies of R packages
 
-Since generating this file requires to have all the CRAN packages installed, we
-only include the result.
+These CSV files were obtained by running the corresponding tasks from [rapr](https://github.com/PRL-PRG/runr/tree/typer-oopsla20/inst/tasks).
 
 To knit the notebook, run:
 
-```{r eval=FALSE}
-rmarkdown::render("~/typeR/analysis/corpus-analysis.Rmd")
+```sh
+./in-docker.sh make corpus-analysis
 ```
 
 This will generate the following files:
@@ -499,19 +571,19 @@ This will generate the following files:
 - `corpus-analysis.html`: an HTML file rendering the notebook
 
 ```{r eval=FALSE}
-viewer("~/typeR/analysis/corpus-analysis.html")
+viewer("~/typeR/evaluation/corpus-analysis.html")
 ```
 
-- `corpus.tex`: a Latex file with the raw data to be included in the paper
+- `corpus.tex`: a Latex tags to be included in the paper
 
 ```{r eval=FALSE}
-viewer("~/typeR/paper/corpus.tex")
+viewer("~/typeR/evaluation/corpus.tex")
 ```
 
 - `corpus.pdf`: a plot of the corpus 
 
 ```{r eval=FALSE}
-viewer("~/typeR/paper/plots/corpus.pdf")
+viewer("~/typeR/evaluation/corpus.pdf")
 ```
 
 ## Building Image Locally
@@ -519,20 +591,22 @@ viewer("~/typeR/paper/plots/corpus.pdf")
 
 To build image locally, run the following in `$REPO`:
 
-```{sh eval=FALSE}
+```sh
 make -C docker-image
 ```
 
 If you do not have GNU make, you can run:
 
-TODO: FILIP
+```sh
+docker build --rm -t prlprg/oopsla20-typer docker-image
+```
 
-## Toubleshooting
+## Troubleshooting
 
 ### File Permissions
 
 The problem with docker is that it runs as root and so do its containers.
-A common trick is to setup a user in an entrypoint script which will have the same UID and GID as the current user on the host system and then run the rest of the script as that user.
+A common trick is to setup a user in an entry-point script which will have the same UID and GID as the current user on the host system and then run the rest of the script as that user.
 Even though we have tried that, it does not work since GNU parallel cannot then reliably set working directory using the `--workdir` flag.
 In the current version therefore, all the generated files will be owned by root user.
 
