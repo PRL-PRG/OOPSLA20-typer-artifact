@@ -165,6 +165,13 @@ For the initial kick-the-tires phase, please go over the following steps to dete
    └── type-traces.csv
    ```
 
+   The `data/assertions-all.csv` file contains all the assertions.
+   The `data/assertions-failed.csv` file contains only failed assertions.
+   The `data/type-analysis/packages/<package>.csv` file contains information about type signatures of `<package>` functions.
+   The `data/type-analysis/merged.csv` file contains information about type signatures of functions from all packages.
+   The `data/TYPEDECLARATION/<package>` files contain type declarations for all functions from the traced packages.
+   The `data/type-traces.csv` file contains type traces obtained from dynamic analysis of package code.
+
 This concludes the getting started guide and the kick the tires part.
 
 ## Step-by-step Instructions
