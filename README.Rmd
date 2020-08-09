@@ -28,7 +28,7 @@ The artifact is composed of two parts:
 2. a _step-by-step instructions_ how to run the tools developed for this paper and how to reproduce the data reported in the paper.
 
 _Note_: This document contains output from executing R code whose line width spans over what can comfortably fit on an A4 format in the PDF.
-It is therefore much nicer to work with the HTML version or directly have it opened in RStudio (cf. below).
+It is therefore much nicer to **work with the HTML version or directly have it opened in RStudio** (cf. below).
 
 ## Requirements 
 
@@ -53,6 +53,7 @@ and of course a corpus of R packages to be run.
 To make it more convenient we have build a docker image that has all these dependencies installed.
 The image can be pulled directly from [Docker HUB](https://hub.docker.com/r/prlprg/oopsla20-typer) or <a href="#building-image-locally">built locally</a>.
 To use the image, you will need:
+
 - git
 - bash, and
 - [docker community edition](https://docs.docker.com/install/) version 18+.
@@ -78,15 +79,16 @@ We will refer to this directory as `$REPO`.
 The artifact has the following structure:
 
 ```
-.
-├── docker-image -- files needed to build the image
-├── README.Rmd   -- this readme in R markdown format
-├── README.md    -- this readme in markdown format
-├── run.sh       -- script to run Rstudio
-└── typeR        -- directory in which the type inference pipeline runs
-    ├── data-corpus.tar.xz   -- archived data from analyzing the full 412 package corpus
-    ├── in-docker.sh         -- a helper script executinig given command in a container
-    ├── Makefile             -- makefile orchestrating the type inference pipeline
+$REPO
+├── docker-image                    -- files needed to build the docker image
+├── README.Rmd                      -- this readme in R markdown format
+├── README.html                     -- this readme in rendered into HTML
+├── README.md                       -- this readme in rendered into markdown
+├── run.sh                          -- script to run Rstudio
+└── typeR                           -- directory in which the type inference pipeline runs
+    ├── data-corpus.tar.xz          -- archived data from analyzing the full 412 package corpus
+    ├── in-docker.sh                -- a helper script executinig given command in a container
+    ├── Makefile                    -- makefile orchestrating the type inference pipeline
     ├── notebooks            
     │   ├── corpus-analysis.Rmd     -- data points for paper's Chapter 5
     │   ├── evaluation-asserts.Rmd  -- data points for paper's Chapter 6.3
@@ -261,6 +263,7 @@ the pattern argument is not supposed to be a numeric value. Secondly, we observe
 two warning messages. These warning messages are provided by `contractr`. The
 first message originates from the type checking of the `pattern` argument of
 `str_count`. The error message contains the following bits of information:
+
 - Parameter name and position
 - Function name
 - Expected type
@@ -619,7 +622,7 @@ docker run \
     prlprg/oopsla20-typer \
     chown -R $(id -u):$(id -g) /home/rstudio/typeR
 ```
-
+text to r
 ### Docker on OSX
 
 It is better to use homebrew cask to install docker:
