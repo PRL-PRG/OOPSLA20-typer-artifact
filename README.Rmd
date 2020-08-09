@@ -73,7 +73,30 @@ For the initial kick-the-tires phase, please go over the following steps to dete
    ```
   
    We will refer to this directory as `$REPO`.
-   The content is discussed in <a href="#artifact-structure">later section</a>.
+   
+   The artifact has the follwing structure:
+   
+   ```
+   .
+   ├── docker-image -- files needed to build the image
+   ├── README.Rmd   -- this readme in R markdown format
+   ├── README.md    -- this readme in markdown format
+   ├── run.sh       -- script to run Rstudio
+   └── typeR        -- directory in which the type inference pipeline runs
+       ├── data-corpus.tar.xz   -- archived data from analyzing the full 412 package corpus
+       ├── in-docker.sh         -- a helper script executinig given command in a container
+       ├── Makefile             -- makefile orchestrating the type inference pipeline
+       ├── notebooks            
+       │   ├── corpus-analysis.Rmd     -- data points for paper's Chapter 5
+       │   ├── evaluation-asserts.Rmd  -- data points for paper's Chapter 6.3
+       │   ├── evaluation.Rmd          -- data points for paper's Chapter 6.{1,2}
+       │   └── inc                     -- auxiliary R files for data analysis
+       ├── packages-corpus.txt         -- list of the 412 packages
+       ├── packages-small-corpus.txt   -- a smaller corpus to be run during the artifact evaluation
+       ├── packages-tiny-corpus.txt    -- a tiny corpus to be run during the kcik the tires phase
+       ├── scripts                     -- auxiliary scripts
+       └── type-analyzer               -- type analyzer source code
+   ```
 
 1. Run RStudio from the artifact docker container
 
@@ -490,11 +513,6 @@ viewer("~/typeR/paper/corpus.tex")
 ```{r eval=FALSE}
 viewer("~/typeR/paper/plots/corpus.pdf")
 ```
-
-## Artifact Structure
-<a name="#artifact-structure"/>
-
-TODO: FILIP
 
 ## Building Image Locally
 <a name="#building-image-locally"/>
