@@ -38,7 +38,7 @@ docker run \
   -e ROOT=TRUE \
   -e DISABLE_AUTH=true \
   -e USERID=$(id -u) \
-  -e GROUPID=$(getent group r | cut -d: -f3) \
+  -e GROUPID=$(id -g) \
   -p "$port:8787" \
   -v "$(pwd)/typeR:/home/rstudio/typeR" \
   -v "$(pwd)/README.Rmd:/home/rstudio/README.Rmd" \

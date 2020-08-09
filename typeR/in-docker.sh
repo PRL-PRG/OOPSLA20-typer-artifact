@@ -10,7 +10,7 @@ docker run \
     -e ROOT=TRUE \
     -e DISABLE_AUTH=true \
     -e USERID=$(id -u) \
-    -e GROUPID=$(getent group r | cut -d: -f3) \
+    -e GROUPID=$(id -g) \
     -v "$base_dir/typeR:/home/rstudio/typeR" \
     -v "$base_dir/README.Rmd:/home/rstudio/README.Rmd" \
     -v "$base_dir/.Rprofile:/home/rstudio/.Rprofile" \
