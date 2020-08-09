@@ -113,9 +113,9 @@ static_occ_by_type <- type_analysis_data %>% group_by(type) %>%
   arrange(-count)
 
 # All ContractR assertions.
-if (params$data_dir == "~/typeR/data") {
+if (params$data_dir != "~/typeR/data-corpus") {
   big_simplified_assertion_df <- read_csv(file.path(params$data_dir, "assertions-all.csv"))
-  big_simplified_assertion_df %>% group_by(package_name, function_name, parameter_position, actual_type, expected_type) %>% summarize(count = n(), succ_ass = sum(assertion_status)) -> big_simplified_assertion_df_extra_simpl 
+  big_simplified_assertion_df %>% group_by(package_name, function_name, parameter_position, actual_type, expected_type) %>% summarize(count = n(), succ_ass = sum(assertion_status)) %>% ungroup -> big_simplified_assertion_df_extra_simpl 
 } else {
   # If we're working with the full data, the file has been preprocessed to be smaller so that it can be loaded.
   big_simplified_assertion_df_extra_simpl <- read_csv(file.path(params$data_dir, "assertions-all.csv"))
