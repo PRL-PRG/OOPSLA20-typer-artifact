@@ -37,6 +37,7 @@ RUN DEBIAN_FRONTEND=noninteractive \
       libxml2-dev \
       rsync \
       tree \
+      texlive \
       unixodbc-dev \
       vim \
       wget \
