@@ -113,9 +113,13 @@ static_occ_by_type <- type_analysis_data %>% group_by(type) %>%
   arrange(-count)
 
 # All ContractR assertions.
-big_simplified_assertion_df <- read_csv(file.path(params$data_dir, "assertions-all.csv"))
-big_simplified_assertion_df %>% group_by(package_name, function_name, parameter_position, actual_type, expected_type) %>% summarize(count = n(), succ_ass = sum(assertion_status)) -> big_simplified_assertion_df_extra_simpl
-# big_simplified_assertion_df_extra_simpl <- read_csv(file.path(params$data_dir, "assertions-all.csv"))
+if (params$data_dir == "~/typeR/data") {
+  big_simplified_assertion_df <- read_csv(file.path(params$data_dir, "assertions-all.csv"))
+  big_simplified_assertion_df %>% group_by(package_name, function_name, parameter_position, actual_type, expected_type) %>% summarize(count = n(), succ_ass = sum(assertion_status)) -> big_simplified_assertion_df_extra_simpl 
+} else {
+  # If we're working with the full data, the file has been preprocessed to be smaller so that it can be loaded.
+  big_simplified_assertion_df_extra_simpl <- read_csv(file.path(params$data_dir, "assertions-all.csv"))
+}
 
 # The output of running propagatr, reduced the data (processed), and combined it into mega CSV.
 core_corpus_run <- read_csv(file.path(params$data_dir, "type-traces.csv"), col_types=paste0("cccccl", paste(rep("ccc", 21), collapse=""), "i")) %>% filter(has_dots != "has_dots")
