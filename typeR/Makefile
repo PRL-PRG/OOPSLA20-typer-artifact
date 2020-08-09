@@ -60,6 +60,9 @@ NOTEBOOKS := $(EVALUATION_HTML) $(PACKAGE_ASSERTS_HTML) $(CORPUS_ANALYSIS_HTML)
 .PHONY: \
   on-each-package \
   notebooks \
+  evaluation \
+  evaluation-asserts \
+  corpus-analysis \
   consolidate-types \
   package-asserts \
   package-functions \
@@ -177,6 +180,8 @@ data: $(TYPE_TRACES_CSV) \
   $(ASSERTIONS_ALL_CSV) \
   $(ASSERTIONS_FAILED_CSV) \
   $(TYPE_ANALYSIS_MERGED_FILE)
+
+notebooks: data-corpus evaluation evaluation-asserts corpus-analysis
 
 corpus-analysis:    $(CORPUS_ANALYSIS_HTML)
 evaluation-asserts: $(EVALUATION_ASSERTS_HTML)
