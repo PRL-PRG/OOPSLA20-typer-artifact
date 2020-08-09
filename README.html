@@ -1571,8 +1571,8 @@ cd OOPSLA20-typer-artifact</code></pre>
 <pre><code>$REPO
 ├── docker-image                    -- files needed to build the docker image
 ├── README.Rmd                      -- this readme in R markdown format
-├── README.md                       -- this readme in markdown format
 ├── README.html                     -- this readme in rendered into HTML
+├── README.md                       -- this readme in rendered into markdown
 ├── run.sh                          -- script to run Rstudio
 └── typeR                           -- directory in which the type inference pipeline runs
     ├── data-corpus.tar.xz          -- archived data from analyzing the full 412 package corpus
@@ -1628,7 +1628,8 @@ No type declarations found for package contractr</code></pre>
 <p>This has to be done in a terminal. Navigate to the <code>$REPO/typeR</code> and run the following:</p>
 <pre class="sh"><code>./in-docker.sh make clean all PACKAGES_FILE=packages-tiny-corpus.txt </code></pre>
 <p><em>Note:</em> Even though it just one package, the pipeline runs all its reverse dependencies to capture type check assertions which might take some time. On a Linux laptop (i7-7560U, 16GB RAM) it takes ~10 minutes to run.</p>
-<p>The <code>make</code> command must be prefixed with <code>in-docker.sh</code> as we want to run it inside a docker container. The <code>PACKAGES_FILE</code> parameter specify which package corpus we want to use. A package corpus is a simple text file with one package name at a time. In general, you could specify any package, but to keep the docker image size in a reasonable bounds, we only include a small subset of the 15K CRAN packages.</p>
+<p>The <code>make</code> command must be prefixed with <code>in-docker.sh</code> as we want to run it inside a docker container. The <code>$REPO/typeR</code> directory is mounted into <code>/home/rstudio/typeR</code> inside the container. All files stored there will be persisted.</p>
+<p>The <code>PACKAGES_FILE</code> parameter specify which package corpus we want to use. A package corpus is a simple text file with one package name at a time. In general, you could specify any package, but to keep the docker image size in a reasonable bounds, we only include a small subset of the 15K CRAN packages.</p>
 <p>The result should be <code>$REPO/typeR/data</code> with the following files:</p>
 <pre><code>data
 ├── assertions-all.csv     
@@ -1930,7 +1931,7 @@ str_count(fruit, 1)</code></pre>
 ##     regex = stri_count_regex(string, pattern, opts_regex = opts(pattern))
 ##   )
 ## }
-## &lt;bytecode: 0x556fc6715e48&gt;
+## &lt;bytecode: 0x562e2584d250&gt;
 ## &lt;environment: namespace:stringr&gt;</code></pre>
 <p>However, <code>contractr</code> modifies this definition internally, without affecting the printed representation of the function definition. The modified function body can be obtained using the <code>body</code> function. As shown below, <code>contractr</code> adds two code blocks at the top of the body. The <code>on.exit</code> block attaches a function exit handler to check the type of the return value. The next block checks the type of all the arguments. The real heavy-lifting happens inside native code. The blocks immediately call C functions (prefixed with <code>C_</code>) using the <code>.Call</code> function. The reason is that <code>contractr</code> has to get around R’s laziness semantics for argument type checking. Due to laziness, the arguments to a function call are unevaluated code thunks (promises). To maintain non-strict evaluation semantics, <code>contractr</code> inserts type-checking and error-reporting logic inside these thunks. It would have been easier to evaluate thunks at this point and check the type of arguments values but that would modify the semantics and break code by prematurely evaluating arguments which may not even be evaluated or perhaps evaluated in a specific order.</p>
 <pre class="r"><code>body(str_count)</code></pre>
@@ -2782,6 +2783,7 @@ f(1L, 2L)</code></pre>
 </div>
 <div id="inferring-types-from-r-code" class="section level3">
 <h3>Inferring Types from R Code</h3>
+<p><a name="#type-inference"></a></p>
 <p>In this section we run the type inference pipeline on a small corpus of 5 packages:</p>
 <pre class="r"><code>cat(paste(&quot;-&quot;, readLines(&quot;~/typeR/packages-small-corpus.txt&quot;)), sep=&quot;\n&quot;)</code></pre>
 <ul>
@@ -2816,6 +2818,7 @@ f(1L, 2L)</code></pre>
 <p>To rerun the analysis, first we have to extract the data for the entire corpus:</p>
 <pre class="sh"><code>./in-docker.sh make data-corpus</code></pre>
 <p>These should gives us similar files as in the previous section where we only analyzed a few packages. The additional <code>cran</code> directory and <code>corpus-details.csv</code> include package metadata obtained for the entire CRAN and the corpus of 412 packages respectively. This is used in the next two sections. The reason why we include them here is that these were the most resource intensive to generate. This is because we needed to get the information about package code coverage and package reverse dependencies code coverage. It on itself took about 2 days of run on 72 cores machine.</p>
+<p>All results are store in <code>~/typeR/evaluation</code> directory.</p>
 <div id="expressiveness-robustness" class="section level4">
 <h4>Expressiveness &amp; Robustness</h4>
 <p>In this section we show how to generate data presented in <em>Section 6.1 Expressiveness</em> and <em>Section 6.2 Robustness</em>. We do this in a separate notebook: <code>~/typeR/notebooks/evaluation.Rmd</code>.</p>
@@ -2823,6 +2826,9 @@ f(1L, 2L)</code></pre>
 <p><em>Note:</em> As you conduct your evaluation, you will find a number of small discrepancies between the numbers seen here and those in the paper. Running large experiments involves random failures, non-deterministic function behavior, and weird environment configurations leading to sporadic issues. These discrepancies are very minor, amounting to differences on the order of fractions of a percent, and we don’t believe this issue to be a cause for major concern.</p>
 <p>Rendering the <code>evaluation.Rmd</code> can be done by running:</p>
 <pre class="sh"><code>./in-docker.sh make evaluation</code></pre>
+<p><em>Note:</em> the evaluation takes a lot of time, it can easily be an hour on a regular laptop.</p>
+<p>The result can be viewed using:</p>
+<pre class="r"><code>viewer(&quot;~/typeR/evaluation/evaluation.html&quot;)</code></pre>
 </div>
 <div id="assertions" class="section level4">
 <h4>Assertions</h4>
