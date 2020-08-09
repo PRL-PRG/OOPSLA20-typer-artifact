@@ -624,7 +624,7 @@ str_count
 ##     regex = stri_count_regex(string, pattern, opts_regex = opts(pattern))
 ##   )
 ## }
-## <bytecode: 0x5595be2eaeb8>
+## <bytecode: 0x55feda8a4648>
 ## <environment: namespace:stringr>
 ```
 
@@ -1580,7 +1580,14 @@ Rendering the `evaluation.Rmd` can be done by running:
 ./in-docker.sh make evaluation
 ```
 
-_Note:_ the evaluation takes a lot of time, it can easily be an hour on a regular laptop.
+_Note:_ the evaluation takes a lot of time, it can easily be over an hour on a regular laptop.
+
+If you successfully infered types for the small corpus (cf. <a href="#type-inference">above</a>), you can run the evaluation using these data:
+
+```sh
+./in-docker.sh make evaluation DATA_CORPUS_DIR=data
+```
+However, the obtained numbers will be quite different.
 
 The result can be viewed using:
 

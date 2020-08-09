@@ -1931,7 +1931,7 @@ str_count(fruit, 1)</code></pre>
 ##     regex = stri_count_regex(string, pattern, opts_regex = opts(pattern))
 ##   )
 ## }
-## &lt;bytecode: 0x5595be2eaeb8&gt;
+## &lt;bytecode: 0x55feda8a4648&gt;
 ## &lt;environment: namespace:stringr&gt;</code></pre>
 <p>However, <code>contractr</code> modifies this definition internally, without affecting the printed representation of the function definition. The modified function body can be obtained using the <code>body</code> function. As shown below, <code>contractr</code> adds two code blocks at the top of the body. The <code>on.exit</code> block attaches a function exit handler to check the type of the return value. The next block checks the type of all the arguments. The real heavy-lifting happens inside native code. The blocks immediately call C functions (prefixed with <code>C_</code>) using the <code>.Call</code> function. The reason is that <code>contractr</code> has to get around R’s laziness semantics for argument type checking. Due to laziness, the arguments to a function call are unevaluated code thunks (promises). To maintain non-strict evaluation semantics, <code>contractr</code> inserts type-checking and error-reporting logic inside these thunks. It would have been easier to evaluate thunks at this point and check the type of arguments values but that would modify the semantics and break code by prematurely evaluating arguments which may not even be evaluated or perhaps evaluated in a specific order.</p>
 <pre class="r"><code>body(str_count)</code></pre>
@@ -2687,7 +2687,10 @@ f(1L, 2L)</code></pre>
 <p><em>Note:</em> As you conduct your evaluation, you will find a number of small discrepancies between the numbers seen here and those in the paper. Running large experiments involves random failures, non-deterministic function behavior, and weird environment configurations leading to sporadic issues. These discrepancies are very minor, amounting to differences on the order of fractions of a percent, and we don’t believe this issue to be a cause for major concern.</p>
 <p>Rendering the <code>evaluation.Rmd</code> can be done by running:</p>
 <pre class="sh"><code>./in-docker.sh make evaluation</code></pre>
-<p><em>Note:</em> the evaluation takes a lot of time, it can easily be an hour on a regular laptop.</p>
+<p><em>Note:</em> the evaluation takes a lot of time, it can easily be over an hour on a regular laptop.</p>
+<p>If you successfully infered types for the small corpus (cf. <a href="#type-inference">above</a>), you can run the evaluation using these data:</p>
+<pre class="sh"><code>./in-docker.sh make evaluation DATA_CORPUS_DIR=data</code></pre>
+<p>However, the obtained numbers will be quite different.</p>
 <p>The result can be viewed using:</p>
 <pre class="r"><code>viewer(&quot;~/typeR/evaluation/evaluation.html&quot;)</code></pre>
 </div>
