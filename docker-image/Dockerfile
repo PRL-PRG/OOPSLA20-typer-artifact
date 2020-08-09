@@ -95,8 +95,10 @@ RUN mkdir parallel && \
     curl http://ftp.gnu.org/gnu/parallel/parallel-latest.tar.bz2 | tar -xjf- --strip 1 && \
     ./configure && \
     make install && \
-    mkdir ~/.parallel && \
-    touch cat ~/.parallel/will-cite
+    mkdir /root/.parallel && \
+    touch /root/.parallel/will-cite && \
+    mkdir /home/rstudio/.parallel && \
+    touch /home/rstudio/.parallel/will-cite
 
 # GNU m4
 RUN mkdir m4 && \

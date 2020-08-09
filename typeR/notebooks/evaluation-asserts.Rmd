@@ -35,11 +35,11 @@ create_tags(path(TAGS_DIR, "package-asserts.tex"), prefix="", default=TRUE)
 ## Data
 
 ```{r load corpus}
-corpus <- read_csv(CORPUS_DETAILS)
+corpus <- read_csv(path(params$data_dir, "corpus-details.csv"))
 ```
 
 ```{r load asserts}
-cran_asserts <- read_csv(CRAN_ASSERTS)
+cran_asserts <- read_csv(path(params$data_dir, "cran", "cran-asserts.csv"))
 corpus_asserts <- semi_join(cran_asserts, corpus, by="package")
 ```
 

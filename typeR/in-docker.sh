@@ -1,5 +1,4 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/bash
 
 script_dir="$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )"
 base_dir=$(dirname "$script_dir")
@@ -10,10 +9,16 @@ docker run \
     -e ROOT=TRUE \
     -e DISABLE_AUTH=true \
     -e USERID=$(id -u) \
-    -e GROUPID=$(getent group r | cut -d: -f3) \
+    -e GROUPID=$(id -g) \
     -v "$base_dir/typeR:/home/rstudio/typeR" \
     -v "$base_dir/README.Rmd:/home/rstudio/README.Rmd" \
     -v "$base_dir/.Rprofile:/home/rstudio/.Rprofile" \
     -w /home/rstudio/typeR \
     prlprg/oopsla20-typer \
     "$@"
+
+docker run \
+    --rm \
+    -v "$base_dir/typeR:/home/rstudio/typeR" \
+    prlprg/oopsla20-typer \
+    chown -R $(id -u):$(id -g) /home/rstudio/typeR
