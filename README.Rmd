@@ -531,7 +531,20 @@ TODO: FILIP
 
 ### File Permissions
 
-TODO: FILIP
+The problem with docker is that it runs as root and so do its containers.
+A common trick is to setup a user in an entrypoint script which will have the same UID and GID as the current user on the host system and then run the rest of the script as that user.
+Even though we have tried that, it does not work since GNU parallel cannot then reliably set working directory using the `--workdir` flag.
+In the current version therefore, all the generated files will be owned by root user.
+
+To mitigate this problem, at least partially, the `in-docker.sh` script at the end runs:
+
+```sh
+docker run \
+    --rm \
+    -v "$base_dir/typeR:/home/rstudio/typeR" \
+    prlprg/oopsla20-typer \
+    chown -R $(id -u):$(id -g) /home/rstudio/typeR
+```
 
 ### Docker on OSX
 

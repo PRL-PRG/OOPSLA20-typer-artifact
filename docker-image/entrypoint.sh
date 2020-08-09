@@ -1,20 +1,21 @@
 #!/bin/bash
 set -e
 
-if [ "$1" == "/init" ]; then
-    # rstudio takes care of the permissions
-    exec "$@"
-fi
-
-# if both not set we do not need to do anything
-if [ -z "${USERID}" -a -z "${GROUPID}" ]; then
-    echo "WARN: Not using USERID and GROUPID."
-    echo "WARN: This is not recommended as it likely lead to file permissions problems";
-else
-    groupmod -g ${USERID} rstudio
-    usermod -u ${USERID} -g ${GROUPID} rstudio
-fi
-
+# unfortunatelly, the following does not work with GNU parallel --workdir
+# if [ "$1" == "/init" ]; then
+#     # rstudio takes care of the permissions
+#     exec "$@"
+# fi
+#
+# # if both not set we do not need to do anything
+# if [ -z "${USERID}" -a -z "${GROUPID}" ]; then
+#     echo "WARN: Not using USERID and GROUPID."
+#     echo "WARN: This is not recommended as it likely lead to file permissions problems";
+# else
+#     groupmod -g ${USERID} rstudio
+#     usermod -u ${USERID} -g ${GROUPID} rstudio
+# fi
+#
 # sudo -u rstudio \
 #      PATH=$PATH \
 #      CRAN_LOCAL_MIRROR=$CRAN_LOCAL_MIRROR \
@@ -33,4 +34,5 @@ fi
 #      R_PROJECT_BASE_DIR=$R_PROJECT_BASE_DIR \
 #      R_VERSION=$R_VERSION \
 #      USERID=$USERID \
+
 exec "$@"

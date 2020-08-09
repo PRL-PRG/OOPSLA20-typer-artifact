@@ -1,5 +1,4 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/bash
 
 script_dir="$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )"
 base_dir=$(dirname "$script_dir")
@@ -17,3 +16,9 @@ docker run \
     -w /home/rstudio/typeR \
     prlprg/oopsla20-typer \
     "$@"
+
+docker run \
+    --rm \
+    -v "$base_dir/typeR:/home/rstudio/typeR" \
+    prlprg/oopsla20-typer \
+    chown -R $(id -u):$(id -g) /home/rstudio/typeR
