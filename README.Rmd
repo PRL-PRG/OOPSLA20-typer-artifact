@@ -1,14 +1,16 @@
 ---
 title: "OOPSLA20 Artifact - Designing Types for R, Empirically"
-authors: "Alexi Turcotte, Aviral Goel, Filip Krikava and Jan Vitek"
-output: 
-  html_document: 
+editor_options:
+  chunk_output_type: console
+output:
+  pdf_document:
+    toc: yes
+  html_document:
     keep_md: yes
     theme: united
     toc: yes
     toc_float: yes
-editor_options: 
-  chunk_output_type: console
+authors: Alexi Turcotte, Aviral Goel, Filip Krikava and Jan Vitek
 ---
 
 ```{r setup, include=FALSE}
@@ -240,7 +242,7 @@ passing a numeric argument to `str_count` also violates the type declaration of
 `type` function. As can be seen from the warning message, the `trace` has size 2
 with `type(pattern)` being called from `str_count(fruit, 1)`.
 
-```{r eval=TRUE}
+```{r eval=TRUE, error=TRUE}
 fruit <- c("apple", "banana", "pear", "pineapple")
 str_count(fruit, 1)
 ```
@@ -254,7 +256,7 @@ severity is set to `"warning"`. It can be set to `"error"` to report type
 mismatch as an error and stop the program. With this setting, execution halts
 with the type mismatch error, so only the first type mismatch is reported.
 
-```{r eval=TRUE}
+```{r eval=TRUE, error=TRUE}
 set_severity("error")
 str_count(fruit, 1)
 ```
@@ -262,7 +264,7 @@ str_count(fruit, 1)
 Severity can also be set to `"silence"` to ignore all type mismatches. With this
 setting, the execution halts with the error message from the function execution.
 
-```{r eval=TRUE}
+```{r eval=TRUE, error=TRUE}
 set_severity("silence")
 str_count(fruit, 1)
 ```
