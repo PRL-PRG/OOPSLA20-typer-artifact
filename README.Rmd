@@ -27,7 +27,7 @@ The artifact is composed of two parts:
 1. a _getting started guide_ that contains the setup instructions and a small experiment to verify that the artifact is usable, and
 2. a _step-by-step instructions_ how to run the tools developed for this paper and how to reproduce the data reported in the paper.
 
-_Note_: This document contains output from executing R code whose line width spans over what can comfortably fit on an A4 format in the PDF.
+_Note_: This document contains output from executing R code whose line width spans over what can comfortably fit on an A4 format in the PDF. Because of that, the evaluation of some of the code blocks is disabled in the PDF.
 It is therefore much nicer to **work with the HTML version or directly have it opened in RStudio** (cf. below).
 
 ## Requirements 
@@ -237,13 +237,13 @@ the 395 packages are loaded, `contractr` automatically adds contracts to their
 functions. If no type declarations are available for a package, `contractr`
 reports that as well.
 
-```{r eval=TRUE}
+```{r}
 library(contractr)
 ```
 
 Now, we load the `stringr` library, for which `contractr` has type declarations.
 
-```{r eval=TRUE}
+```{r}
 library(stringr)
 ```
 
@@ -255,7 +255,7 @@ in each element of a string vector (character vector in R speak). Here is an
 example of a type-correct interaction withe the `str_count` function.
 
 
-```{r eval=TRUE}
+```{r}
 fruit <- c("apple", "banana", "pear", "pineapple")
 str_count(fruit, "a")
 ```
@@ -282,7 +282,7 @@ passing a numeric argument to `str_count` also violates the type declaration of
 `type` function. As can be seen from the warning message, the `trace` has size 2
 with `type(pattern)` being called from `str_count(fruit, 1)`.
 
-```{r eval=TRUE, error=TRUE}
+```{r error=TRUE}
 fruit <- c("apple", "banana", "pear", "pineapple")
 str_count(fruit, 1)
 ```
@@ -296,7 +296,7 @@ severity is set to `"warning"`. It can be set to `"error"` to report type
 mismatch as an error and stop the program. With this setting, execution halts
 with the type mismatch error, so only the first type mismatch is reported.
 
-```{r eval=TRUE, error=TRUE}
+```{r error=TRUE}
 set_severity("error")
 str_count(fruit, 1)
 ```
@@ -304,14 +304,14 @@ str_count(fruit, 1)
 Severity can also be set to `"silence"` to ignore all type mismatches. With this
 setting, the execution halts with the error message from the function execution.
 
-```{r eval=TRUE, error=TRUE}
+```{r error=TRUE}
 set_severity("silence")
 str_count(fruit, 1)
 ```
 
 We set the severity back to `"warning"` for the rest of the session.
 
-```{r eval=TRUE}
+```{r}
 set_severity("warning")
 ```
 
@@ -319,7 +319,7 @@ Let's look at how the function definition is modified by `contractr` to enable
 the type mismatch checks. If we type the function name on the R console, it
 prints out the definition of the function as it parsed from the package code.
 
-```{r eval=TRUE}
+```{r}
 str_count
 ```
 
@@ -339,7 +339,7 @@ arguments values but that would modify the semantics and break code by
 prematurely evaluating arguments which may not even be evaluated or perhaps
 evaluated in a specific order.
 
-```{r eval=TRUE}
+```{r}
 body(str_count)
 ```
 
@@ -362,7 +362,7 @@ add3 <- function(x) {
 useful for adding contracts to functions defined interactively on the console.
 Note how `contractr` provides type errors for return types and all parameter types.
 
-```{r eval=TRUE}
+```{r}
 f <- function(x, y) {
     x + y - 1L
 }
@@ -383,13 +383,13 @@ The following interaction outputs a large data frame. Each row is a contract
 assertion (failed or succeeded). The columns contain information about the
 assertions.
 
-```{r eval=TRUE}
-get_contracts()
+```{r}
+get_contracts() %>% str()
 ```
 
 `clear_contracts` API clears the internal record of contract assertions.
 
-```{r eval=TRUE}
+```{r}
 clear_contracts()
 get_contracts()
 ```
@@ -407,7 +407,7 @@ does not perform any contract assertions.
 In this code block, type checking of argument and return values for `f(1, 2)`
 will not happen. Only `f(1L, 2)` will be type checked.
 
-```{r eval=TRUE}
+```{r}
 result <- ignore_contracts({
     capture_contracts({
         f(1L, 2)
@@ -419,7 +419,7 @@ result
 
 In this code block, the behavior is reversed.
 
-```{r eval=TRUE}
+```{r}
 result <- capture_contracts({
     ignore_contracts({
         f(1L, 2)
@@ -445,8 +445,8 @@ and discussed the following salient aspects of its design.
 
 In this section we run the type inference pipeline on a small corpus of 5 packages:
 
-```{r results='asis'}
-cat(paste("-", readLines("~/typeR/packages-small-corpus.txt")), sep="\n")
+```{r echo=FALSE, eval=TRUE, results='asis'}
+cat(paste("-", sort(readLines("~/typeR/packages-small-corpus.txt"))), sep="\n")
 ```
 
 The reason why we run only 5 packages is that (1) the dynamic tracing is quite resource intensive as all invocations are recorded and (2) running 12M of R lines (runnable code of the corpus + reverse dependencies) takes a lot of time.
