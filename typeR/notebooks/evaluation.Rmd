@@ -23,7 +23,7 @@ suppressPackageStartupMessages(library(purrr))
 library(readr)
 library(runr)
 library(tidyr)
-# TODO FILIP: Need library(ggplot), doesnt look like it's installed atm.
+library(ggplot2)
 
 # Data manipulation functions.
 source(file.path(params$scripts_dir, "data-analysis-lib.R"))
