@@ -11,6 +11,10 @@ is_outlier <- function(x, m=1.5) {
   (x < is_outlier_min(x, m)) | (x > is_outlier_max(x, m))
 }
 
+show_url <- Vectorize(function(path, name=basename(path), path_prefix="", hostname=params$hostname, port=params$port) {
+  str_glue('<a href="http://{hostname}:{port}/{path_prefix}{URLencode(path)}">{name}</a>')
+}, vectorize.args=c("path", "name"))
+
 read_parallel_run_csv <- function(path) {
   read_csv(path,
     col_types=cols(

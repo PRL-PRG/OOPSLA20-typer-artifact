@@ -1,6 +1,6 @@
-ifndef IN_DOCKER
-$(error Targets in this makefile are supposed to be run in a docker container. Try prefixing with ./run.sh)
-endif
+#ifndef IN_DOCKER
+#$(error Targets in this makefile are supposed to be run in a docker container. Try prefixing with ./run.sh)
+#endif
 
 # extra parameters
 JOBS          ?= 1
@@ -11,6 +11,7 @@ R_PROJECT_BASE_DIR ?= /R
 
 # environment
 R_DIR              := $(R_PROJECT_BASE_DIR)/R-3.5.0
+R_BIN              := $(R_DIR)/bin/R
 RDT_DIR            := $(R_PROJECT_BASE_DIR)/R-dyntrace
 RUNR_DIR           := $(R_PROJECT_BASE_DIR)/runr
 RUNR_TASKS_DIR     := $(RUNR_DIR)/inst/tasks
@@ -37,6 +38,13 @@ PROPAGATR_RUN_CSV     := $(RUN_DIR)/propagatr-run/run.csv
 REVDEPS_CODE_CSV      := $(RUN_DIR)/revdeps-code/runnable-code.csv
 REVDEPS_RUN_CSV       := $(RUN_DIR)/revdeps-run/run.csv
 
+# kaggle
+KAGGLE_DIR          := $(CURDIR)/kaggle
+KAGGLE_RUN_DIR      := $(KAGGLE_DIR)/kaggle-run
+KAGGLE_SCRIPTS_FILE := $(KAGGLE_RUN_DIR)/scripts.txt
+KAGGLE_KERNELS_FILE := $(KAGGLE_RUN_DIR)/kernels.csv
+KAGGLE_RUN_CSV      := $(KAGGLE_RUN_DIR)/task-stats.csv
+
 # data
 ASSERTIONS_ALL_CSV        := $(DATA_DIR)/assertions-all.csv
 ASSERTIONS_FAILED_CSV     := $(DATA_DIR)/assertions-failed.csv
@@ -54,6 +62,7 @@ EVALUATION_DIR          := evaluation
 EVALUATION_HTML         := $(EVALUATION_DIR)/evaluation.html
 EVALUATION_ASSERTS_HTML := $(EVALUATION_DIR)/evaluation-asserts.html
 CORPUS_ANALYSIS_HTML    := $(EVALUATION_DIR)/corpus-analysis.html
+KAGGLE_HTML             := $(EVALUATION_DIR)/kaggle.html
 
 NOTEBOOKS := $(EVALUATION_HTML) $(PACKAGE_ASSERTS_HTML) $(CORPUS_ANALYSIS_HTML)
 
@@ -71,6 +80,8 @@ NOTEBOOKS := $(EVALUATION_HTML) $(PACKAGE_ASSERTS_HTML) $(CORPUS_ANALYSIS_HTML)
   propagatr-run \
   revdeps-code \
   revdeps-run \
+  kaggle-code \
+  kaggle-run \
   type-analyzer \
   .compress-data-corpus
 
@@ -86,11 +97,13 @@ $(EVALUATION_ASSERTS_HTML): $(DATA_CORPUS_DIR)/cran/cran-asserts.csv
 $(EVALUATION_ASSERTS_HTML): export DATA_DIR=$(DATA_CORPUS_DIR)
 $(CORPUS_ANALYSIS_HTML): $(DATA_CORPUS_DIR)/cran/cran-details.csv
 $(CORPUS_ANALYSIS_HTML): export DATA_DIR=$(DATA_CORPUS_DIR)
+$(KAGGLE_HTML): $(KAGGLE_RUN_CSV) $(KAGGLE_KERNELS_FILE)
 
 $(EVALUATION_DIR)/%.html : $(NOTEBOOKS_DIR)/%.Rmd
 	-mkdir -p $(EVALUATION_DIR)
-	$(RUNR_DIR)/inst/start-xvfb.sh
-	R --slave -q -e 'rmarkdown::render("$(NOTEBOOKS_DIR)/$(<F)", output_dir="$(EVALUATION_DIR)", params=list(data_dir="$(realpath $(DATA_DIR))", scripts_dir="$(realpath $(SCRIPTS_DIR))", output_dir="$(realpath $(EVALUATION_DIR))"))'
+	nohup Xvfb :6 -screen 0 1280x1024x24 >/dev/null 2>&1 & \
+  export DISPLAY=:6; \
+  $(R_BIN) --slave -q -e 'rmarkdown::render("$(NOTEBOOKS_DIR)/$(<F)", output_dir="$(EVALUATION_DIR)", params=list(data_dir="$(realpath $(DATA_DIR))", scripts_dir="$(realpath $(SCRIPTS_DIR))", output_dir="$(realpath $(EVALUATION_DIR))"))'
 
 $(TYPE_ANALYZER):
 	$(MAKE) -C type-analyzer
@@ -162,6 +175,26 @@ $(REVDEPS_RUN_CSV):
     ARGS="$(dir $(REVDEPS_CODE_CSV))/{1/}"
 	$(MERGE_CSV) "$(OUTPUT_DIR)" $(@F) $(notdir $(ASSERTIONS_ALL_CSV)) $(notdir $(ASSERTIONS_FAILED_CSV))
 
+$(KAGGLE_SCRIPTS_FILE) $(KAGGLE_KERNELS_FILE): $(KAGGLE_DIR)/kaggle-datasets $(KAGGLE_DIR)/kaggle-kernels
+	$(R_BIN) --no-save -f scripts/extract-kaggle-code.R
+
+# kaggle kernels are not packages so we cannot run them the same way
+# but, one kernel is one file, so the run.csv from parallel is
+# comparable to run.csv from run-extracted-code.R
+$(KAGGLE_RUN_CSV): $(KAGGLE_SCRIPTS_FILE)
+	-$(RUNR_DIR)/inst/start-xvfb.sh && \
+  parallel \
+    -a $(KAGGLE_SCRIPTS_FILE) \
+    --bar \
+    --jobs 60 \
+    --results $(KAGGLE_RUN_CSV) \
+    --tagstring '{/}' \
+    --timeout 1h \
+    --workdir '{1}/' \
+    $(RUNR_DIR)/inst/run-task.sh \
+      $(realpath $(R_BIN)) CMD BATCH $(CURDIR)/'{1}/run.R' $(CURDIR)/'{1}/run.R.out'
+	$(MERGE_CSV) "$(@D)" "$(@F)" $(notdir $(ASSERTIONS_ALL_CSV)) $(notdir $(ASSERTIONS_FAILED_CSV))
+
 $(TYPE_ANALYSIS_MERGED_FILE): $(TYPE_ANALYZER) $(TYPEDECLARATION)
 	-rm -fr $(TYPE_ANALYSIS_PACKAGE_DIR)
 	-mkdir -p $(TYPE_ANALYSIS_PACKAGE_DIR)
@@ -181,11 +214,12 @@ data: $(TYPE_TRACES_CSV) \
   $(ASSERTIONS_FAILED_CSV) \
   $(TYPE_ANALYSIS_MERGED_FILE)
 
-notebooks: data-corpus evaluation evaluation-asserts corpus-analysis
+notebooks: data-corpus evaluation evaluation-asserts corpus-analysis kaggle
 
 corpus-analysis:    $(CORPUS_ANALYSIS_HTML)
 evaluation-asserts: $(EVALUATION_ASSERTS_HTML)
 evaluation:         $(EVALUATION_HTML)
+kaggle:             $(KAGGLE_HTML)
 
 consolidate-types: $(CONSOLIDATE_TYPES_CSV)
 package-asserts:   $(PACKAGE_ASSERTS_CSV)
@@ -195,6 +229,8 @@ propagatr-code:    $(PROPAGATR_CODE_CSV)
 propagatr-run:     $(PROPAGATR_RUN_CSV)
 revdeps-code:      $(REVDEPS_CODE_CSV)
 revdeps-run:       $(REVDEPS_RUN_CSV)
+kaggle-code:       $(KAGGLE_SCRIPTS_FILE)
+kaggle-run:        $(KAGGLE_RUN_CSV)
 type-analyzer:     $(TYPE_ANALYZER)
 type-analysis:     $(TYPE_ANALYSIS_MERGED_FILE)
 
@@ -202,10 +238,18 @@ on-each-package:
 	@[ "$(TASK)" ] || ( echo "*** Undefined TASK"; exit 1 )
 	@[ -x "$(TASK)" ] || ( echo "*** $(TASK): no such file"; exit 1 )
 	@[ "$(OUTPUT_DIR)" ] || ( echo "*** Undefined OUTPUT_DIR"; exit 1 )
-	@[ -z "$(START_XVFB)" ] || $(RUNR_DIR)/inst/start-xvfb.sh
-
-	-mkdir -p "$(OUTPUT_DIR)"
-	-PATH=$$R_DIR/bin:$$PATH; \
+	-if [ -n "$(START_XVFB)" ]; then  \
+     nohup Xvfb :6 -screen 0 1280x1024x24 >/dev/null 2>&1 & \
+     export DISPLAY=:6; \
+  fi; \
+  export R_TESTS=""; \
+  export R_BROWSER="false"; \
+  export R_PDFVIEWER="false"; \
+  export R_BATCH=1; \
+  export NOT_CRAN="true"; \
+  echo "X11 display=$$DISPLAY"; \
+  mkdir -p "$(OUTPUT_DIR)"; \
+  export PATH=$$R_DIR/bin:$$PATH; \
   parallel \
     -a $(PACKAGES_FILE) \
     --bar \

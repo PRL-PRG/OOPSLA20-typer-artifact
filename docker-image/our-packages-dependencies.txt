@@ -19,3 +19,5 @@ withr
 dynutils
 gluedown
 tableschema.r
+rjson
+fst

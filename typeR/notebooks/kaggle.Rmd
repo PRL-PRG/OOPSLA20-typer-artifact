@@ -1,0 +1,136 @@
+---
+title: "Kaggle"
+output: html_document
+params: 
+  base_dir: /home/rstudio/typeR
+  kaggle_dir: /home/rstudio/typeR/kaggle
+  data_dir: /home/rstudio/typeR/data
+  scripts_dir: /home/rstudio/typeR/scripts
+  output_dir: /home/rstudio/typeR/evaluation
+  hostname: prl3
+  port: 8001
+  competitions:
+    - titanic
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+for (x in c(
+  "callr",
+  "dplyr", 
+  "DT", 
+  "fs",
+  "lubridate",
+  "knitr",
+  "purrr",
+  "readr",
+  "rjson",
+  "rmarkdown",
+  "runr",
+  "stringr",
+  "tibble"
+  )) {
+  suppressPackageStartupMessages(library(x, character.only=TRUE))
+}
+
+knitr::opts_chunk$set(echo = TRUE)
+
+# TODO: move into the package
+source("inc/paths.R")
+source("inc/setup.R")
+source("inc/latextags.R")
+
+create_tags(path(TAGS_DIR, "kaggle.tex"), prefix="Kaggle", default=TRUE)
+```
+
+```{r consts}
+BASE_DIR            <- params$base_dir
+KAGGLE_DIR          <- params$kaggle_dir
+KAGGLE_KERNELS_DIR  <- path(KAGGLE_DIR, "kaggle-kernels", "notebooks", "r", "kernels")
+KAGGLE_DATASETS_DIR <- path(KAGGLE_DIR, "kaggle-datasets")
+KAGGLE_RUN_DIR      <- path(KAGGLE_DIR, "kaggle-run")
+
+KERNELS_FILE      <- path(KAGGLE_RUN_DIR, "kernels.csv")
+SCRIPTS_FILE      <- path(KAGGLE_RUN_DIR, "scripts.txt")
+KAGGLE_RUN_FILE   <- path(KAGGLE_RUN_DIR, "task-stats.csv")
+KAGGLE_KERNELS_RUN_FILE <- path(KAGGLE_RUN_DIR, "kernels-run.csv")
+```
+
+```{r load data}
+run <- 
+  read_csv(KAGGLE_RUN_FILE) %>%
+  transmute(
+    id=str_replace(command, paste0(".*", KAGGLE_RUN_DIR, "/titanic/(.*)/.*"), "\\1"),
+    start_time=as_datetime(start_time),
+    end_time=as_datetime(end_time),
+    runtime=end_time-start_time,
+    exitval
+  )
+
+kernels <- 
+  read_csv(KERNELS_FILE) %>%
+  left_join(
+    run,
+    by="id"
+  ) %>%
+  mutate(
+    run_dir     = path(basename(BASE_DIR), dirname(run_file)),
+    run_file    = path(basename(BASE_DIR), run_file),
+    run_out_file= str_c(run_file, ".out"),
+    run_out=map_chr(file.path("~", run_out_file), function(x) if (file_exists(x)) read_file(x) else NA),
+    status=case_when(
+      !runnable      ~ "duplicate",
+      exitval ==  0  ~ "success",
+      exitval == -1  ~ "error-timeout",
+      exitval ==  1 & str_detect(run_out, "Error in library\\(.+\\) : there is no package called ‘.+’\nExecution halted") ~ "error-missing-library",
+      exitval ==  1  ~ "error",
+      TRUE           ~ "failure"
+    )
+  )
+```
+
+```{r}
+count(kernels, status)
+```
+
+```{r}
+write_csv(kernels, KAGGLE_KERNELS_RUN_FILE)
+```
+
+```{r}
+kernels_duplicated <- filter(kernels, status == "duplicate")
+kernels_runnable   <- filter(kernels, code > 0)
+kernels_success    <- filter(kernels, status == "success")
+
+overview_table(
+  r("downloaded", kernels),
+  r("duplicated", kernels_duplicated),
+  r("duplicated ratio", ratio(kernels_duplicated, kernels)),
+  r("runnable", kernels_runnable),
+  r("runnable code", sum(kernels_runnable$code)),
+  r("success", kernels_success),
+  r("success code", sum(kernels_success$code)),
+  r("fail", filter(kernels, status != "success")),
+  r("error missing library", filter(kernels, status == "error-missing-library")),
+  r("error timeout", filter(kernels, status == "error-timeout"))
+)
+```
+
+```{r}
+select(
+  kernels,
+  id,
+  status,
+  run_dir,
+  run_file,
+  run_out_file
+) %>%
+filter(status != "duplicate") %>%
+mutate(
+  run_dir      = show_url(run_dir, path_prefix="files/"),
+  run_file     = show_url(run_file, path_prefix="files/"),
+  run_out_file = show_url(run_out_file, path_prefix="files/")
+) %>%
+my_datatable(escape=FALSE)
+```
